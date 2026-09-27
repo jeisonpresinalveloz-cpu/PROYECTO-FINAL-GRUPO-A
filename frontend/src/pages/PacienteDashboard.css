@@ -1,0 +1,112 @@
+.dashboard-container {
+  padding: 40px 20px;
+  background-color: #f4f6f8;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #2c3e50;
+}
+
+.filter-section {
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  gap: 10px;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1px solid #cfd8dc;
+  border-radius: 30px;
+  font-size: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.filter-input:focus {
+  border-color: #00acc1;
+}
+
+.medicos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.medico-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border-top: 5px solid #00acc1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.medico-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.medico-name {
+  font-size: 20px;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+}
+
+.medico-specialty {
+  display: inline-block;
+  background: #e0f7fa;
+  color: #00838f;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.horarios-container {
+  background-color: #f9fbfc;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #eceff1;
+}
+
+.horarios-title {
+  font-size: 12px;
+  color: #7f8c8d;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.horario-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #cfd8dc;
+  font-size: 14px;
+  color: #34495e;
+}
+
+.horario-item:last-child {
+  border-bottom: none;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 18px;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+}
