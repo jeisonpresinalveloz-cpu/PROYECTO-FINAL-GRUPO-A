@@ -2,7 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Importación necesaria para el Token
 
-exports.register = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
 
     const { name, email, password, role, especialidad, horarios } = req.body;

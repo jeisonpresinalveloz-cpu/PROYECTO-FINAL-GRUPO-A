@@ -1,8 +1,9 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit'); // 1. Importar la librería de seguridad
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
+const medicoRoutes = require('./src/routes/medicoRoutes');
 
 // Cargar variables de entorno
 dotenv.config();
@@ -23,6 +24,7 @@ const limiter = rateLimit({
 app.use(cors());
 app.use(express.json());
 app.use(limiter); // 3. Activar el limitador globalmente para todas las rutas
+app.use('/api/medicos', medicoRoutes);
 
 // Rutas
 app.use('/api/auth', require('./src/routes/authRoutes'));

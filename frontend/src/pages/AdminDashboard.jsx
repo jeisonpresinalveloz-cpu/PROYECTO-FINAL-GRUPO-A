@@ -67,7 +67,7 @@ const AdminDashboard = () => {
         <div className="admin-header">
           <div className="admin-icon">⚙️</div>
           <h2 className="admin-title">Panel de Administración</h2>
-          <p className="admin-subtitle">Registro Interno de Personal Médico (HU03)</p>
+          <p className="admin-subtitle">Registro Interno de Personal Médico</p>
         </div>
         
         {error && <div className="error-message">{error}</div>}

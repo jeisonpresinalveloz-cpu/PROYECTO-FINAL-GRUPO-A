@@ -57,7 +57,7 @@ const Login = () => {
               type="email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
-              placeholder="maria@correo.com"
+              placeholder="Introduzca su correo electrónico"
               required 
             />
           </div>
