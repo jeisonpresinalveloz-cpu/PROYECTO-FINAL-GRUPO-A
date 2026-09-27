@@ -2,39 +2,46 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Importación necesaria para el Token
 
-const registerUser = async (req, res) => {
-    try {
-        const { name, email, password, role, specialty } = req.body;
+exports.register = async (req, res) => {
+  try {
 
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ mensaje: 'El usuario ya existe con ese correo' });
-        }
+    const { name, email, password, role, especialidad, horarios } = req.body;
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role,
-            specialty
-        });
-
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-        });
-
-    } catch (error) {
-        res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+    // 2. Verificamos si el usuario ya existe
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ mensaje: 'El usuario ya existe con ese correo' });
     }
+
+    // 3. ENCRIPTAMOS LA CONTRASEÑA (¡Vital para no romper el Login del Sprint 1!)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 4. Creamos el usuario en la base de datos con todos sus atributos
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'paciente', // Si no envían rol, por defecto es paciente
+      especialidad,
+      horarios
+    });
+
+    // 5. Devolvemos respuesta exitosa con los datos confirmados
+    res.status(201).json({
+      mensaje: 'Usuario registrado exitosamente',
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+  }
 };
 
-// Nueva función de Login
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;

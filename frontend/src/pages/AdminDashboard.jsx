@@ -1,13 +1,40 @@
+// ==========================================
+// ARCHIVO: pages/AdminDashboard.jsx
+// HISTORIA: HU03 - Catálogo de médicos y horarios
+// ==========================================
 import { useState } from 'react';
 import axios from 'axios';
-import './Login.css'; // Reutilizamos los estilos de la clínica
+import './AdminDashboard.css'; // Conexión estricta a la hoja de estilos externa
 
 const AdminDashboard = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [especialidad, setEspecialidad] = useState('');
+  
+  // Estado dinámico para los horarios del médico
+  const [horarios, setHorarios] = useState([
+    { dia: 'Lunes', horaInicio: '08:00', horaFin: '12:00' }
+  ]);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Funciones para manejar los horarios dinámicamente
+  const handleAddHorario = () => {
+    setHorarios([...horarios, { dia: 'Lunes', horaInicio: '08:00', horaFin: '12:00' }]);
+  };
+
+  const handleRemoveHorario = (index) => {
+    const nuevosHorarios = horarios.filter((_, i) => i !== index);
+    setHorarios(nuevosHorarios);
+  };
+
+  const handleHorarioChange = (index, campo, valor) => {
+    const nuevosHorarios = [...horarios];
+    nuevosHorarios[index][campo] = valor;
+    setHorarios(nuevosHorarios);
+  };
 
   const handleRegisterDoctor = async (e) => {
     e.preventDefault();
@@ -15,42 +42,36 @@ const AdminDashboard = () => {
     setSuccess('');
     
     try {
-      // Petición al backend forzando el rol de 'medico'
       await axios.post('http://localhost:5000/api/auth/register', {
         name,
         email,
         password,
-        role: 'medico' 
+        role: 'medico',
+        especialidad,
+        horarios
       });
       
-      setSuccess('Perfil de médico creado y guardado en la base de datos.');
-      // Limpiamos el formulario después de un registro exitoso
-      setName('');
-      setEmail('');
-      setPassword('');
+      setSuccess('Perfil de médico y sus horarios guardados exitosamente.');
+      setName(''); setEmail(''); setPassword(''); setEspecialidad('');
+      setHorarios([{ dia: 'Lunes', horaInicio: '08:00', horaFin: '12:00' }]);
       
     } catch (error) {
-      setError('Error al registrar al personal médico. Verifica el servidor.');
+      setError(error.response?.data?.mensaje || 'Error al registrar al personal médico.');
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card" style={{ maxWidth: '500px' }}>
+    <div className="admin-container">
+      <div className="admin-card">
         
-        <div className="login-header">
-          {/* Ícono de engranaje para denotar administración */}
-          <div className="login-icon" style={{ backgroundColor: '#2c3e50' }}>⚙️</div>
-          <h2 className="login-title">Panel de Administración</h2>
-          <p className="login-subtitle">Registro Interno de Personal Médico</p>
+        <div className="admin-header">
+          <div className="admin-icon">⚙️</div>
+          <h2 className="admin-title">Panel de Administración</h2>
+          <p className="admin-subtitle">Registro Interno de Personal Médico (HU03)</p>
         </div>
         
         {error && <div className="error-message">{error}</div>}
-        {success && (
-          <div style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', borderLeft: '4px solid #2e7d32' }}>
-            {success}
-          </div>
-        )}
+        {success && <div className="success-message">{success}</div>}
         
         <form onSubmit={handleRegisterDoctor}>
           <div className="form-group">
@@ -59,38 +80,93 @@ const AdminDashboard = () => {
               type="text" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
-              placeholder="Ej. Dr. Roberto Sánchez"
+              placeholder="Ej. Dra. Pérez"
               required 
             />
           </div>
           
+          <div className="form-row">
+            <div className="form-group-half">
+              <label>Correo Institucional</label>
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="form-group-half">
+              <label>Contraseña Temporal</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label>Correo Institucional</label>
+            <label>Especialidad</label>
             <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              placeholder="roberto.sanchez@clinica.com"
+              type="text" 
+              value={especialidad} 
+              onChange={(e) => setEspecialidad(e.target.value)} 
+              placeholder="Ej. Pediatría, Cardiología..."
               required 
             />
           </div>
           
-          <div className="form-group">
-            <label>Contraseña Temporal</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              placeholder="Asignar contraseña"
-              required 
-            />
+          {/* Sección dinámica de horarios */}
+          <div className="schedule-container">
+            <div className="schedule-title">Configuración de Horarios de Atención</div>
+            {horarios.map((horario, index) => (
+              <div key={index} className="schedule-row">
+                <select 
+                  className="schedule-input"
+                  value={horario.dia} 
+                  onChange={(e) => handleHorarioChange(index, 'dia', e.target.value)}
+                >
+                  <option value="Lunes">Lunes</option>
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+                
+                <input 
+                  type="time" 
+                  className="schedule-input"
+                  value={horario.horaInicio} 
+                  onChange={(e) => handleHorarioChange(index, 'horaInicio', e.target.value)}
+                  required
+                />
+                <span>a</span>
+                <input 
+                  type="time" 
+                  className="schedule-input"
+                  value={horario.horaFin} 
+                  onChange={(e) => handleHorarioChange(index, 'horaFin', e.target.value)}
+                  required
+                />
+                
+                {horarios.length > 1 && (
+                  <button type="button" className="btn-remove" onClick={() => handleRemoveHorario(index)}>
+                    X
+                  </button>
+                )}
+              </div>
+            ))}
+            <button type="button" className="btn-add" onClick={handleAddHorario}>
+              + Agregar otro día/horario
+            </button>
           </div>
           
-          <button type="submit" className="login-button" style={{ backgroundColor: '#2c3e50' }}>
-            Registrar Perfil Médico
+          <button type="submit" className="admin-button">
+            Guardar Perfil Médico
           </button>
         </form>
-        
       </div>
     </div>
   );

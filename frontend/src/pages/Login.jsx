@@ -44,7 +44,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <div className="login-icon">✚</div>
-          <h2 className="login-title">MediCare Plus</h2>
+          <h2 className="login-title">Plaza De La Salud</h2>
           <p className="login-subtitle">Portal de Pacientes y Personal Médico</p>
         </div>
         
