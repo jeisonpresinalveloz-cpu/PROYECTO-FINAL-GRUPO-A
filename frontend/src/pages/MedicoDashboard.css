@@ -1,0 +1,7 @@
+.medico-dashboard-container {
+  padding: 50px;
+  text-align: center;
+  font-family: sans-serif;
+  background-color: #f4f6f8;
+  min-height: 100vh;
+}

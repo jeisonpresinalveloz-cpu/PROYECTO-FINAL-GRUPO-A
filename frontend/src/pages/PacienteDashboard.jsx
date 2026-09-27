@@ -34,7 +34,7 @@ const PacienteDashboard = () => {
   });
 
   if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Cargando catálogo médico...</div>;
+    return <div className="loading-message">Cargando catálogo médico...</div>;
   }
 
   return (

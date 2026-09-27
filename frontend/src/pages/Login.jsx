@@ -75,8 +75,8 @@ const Login = () => {
         </form>
 
         {/* HU01: Opción para ir a registrarse si no tiene cuenta */}
-        <div style={{ marginTop: '20px', fontSize: '14px' }}>
-          ¿No tienes cuenta? <Link to="/register" style={{ color: '#00acc1', textDecoration: 'none', fontWeight: 'bold' }}>Regístrate aquí</Link>
+        <div className="footer-text">
+        ¿No tienes cuenta? <Link to="/register" className="footer-link">Regístrate aquí</Link>
         </div>
       </div>
     </div>

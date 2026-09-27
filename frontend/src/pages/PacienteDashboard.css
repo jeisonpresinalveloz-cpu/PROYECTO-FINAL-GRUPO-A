@@ -110,3 +110,10 @@
   background: white;
   border-radius: 12px;
 }
+
+.loading-message {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 18px;
+  color: #7f8c8d;
+}

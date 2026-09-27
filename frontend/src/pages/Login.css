@@ -113,3 +113,14 @@
   font-size: 14px;
   border-left: 4px solid #c62828;
 }
+
+.footer-text {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.footer-link {
+  color: #00acc1;
+  text-decoration: none;
+  font-weight: bold;
+}

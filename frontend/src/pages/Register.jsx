@@ -77,8 +77,8 @@ const Register = () => {
           <button type="submit" className="login-button">Crear Cuenta</button>
         </form>
         
-        <div style={{ marginTop: '20px', fontSize: '14px' }}>
-          ¿Ya tienes cuenta? <Link to="/" style={{ color: '#00acc1', textDecoration: 'none', fontWeight: 'bold' }}>Inicia sesión aquí</Link>
+        <div className="footer-text">
+        ¿Ya tienes cuenta? <Link to="/" className="footer-link">Inicia sesión aquí</Link>
         </div>
       </div>
     </div>
