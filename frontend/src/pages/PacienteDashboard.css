@@ -117,3 +117,31 @@
   font-size: 18px;
   color: #7f8c8d;
 }
+
+/* Botón de Cerrar Sesión */
+.logout-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  float: right;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
+}
+
+/* Ajuste para que el botón conviva bien con el título */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-text-container {
+  text-align: left;
+}

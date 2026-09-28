@@ -14,3 +14,17 @@ exports.getMedicos = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener el catálogo de médicos' });
   }
 };
+
+// Obtener un médico específico por su ID
+exports.getMedicoById = async (req, res) => {
+  try {
+    const medico = await User.findById(req.params.id).select('-password');
+    if (!medico || medico.role !== 'medico') {
+      return res.status(404).json({ mensaje: 'Médico no encontrado' });
+    }
+    res.status(200).json(medico);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener los datos del médico' });
+  }
+};

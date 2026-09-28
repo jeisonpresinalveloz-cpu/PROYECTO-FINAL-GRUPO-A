@@ -3,6 +3,7 @@
 // HISTORIA: HU04 - Catálogo y Filtros de Médicos
 // ==========================================
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './PacienteDashboard.css';
 
@@ -10,6 +11,13 @@ const PacienteDashboard = () => {
   const [medicos, setMedicos] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear(); // Borra el token y los datos del usuario
+    navigate('/'); // Lo devuelve al Login
+  };
 
   // 1. Cargar la lista de médicos desde el backend al iniciar la pantalla
   useEffect(() => {
@@ -39,9 +47,15 @@ const PacienteDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
+      <div className="header-top dashboard-header">
+        <div className="header-text-container">
         <h1>Catálogo de Especialistas</h1>
         <p>Encuentra a tu médico y revisa sus horarios de atención</p>
+      </div>
+        
+        <button className="logout-button" onClick={handleLogout}>
+          Cerrar Sesión
+        </button>
       </div>
 
       <div className="filter-section">
