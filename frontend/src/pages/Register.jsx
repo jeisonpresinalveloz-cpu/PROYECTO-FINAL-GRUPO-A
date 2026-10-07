@@ -35,7 +35,7 @@ const Register = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-icon">✚</div>
+          <div className="login-icon"></div>
           <h2 className="login-title">Registro de Pacientes</h2>
           <p className="login-subtitle">Crea tu cuenta en La Plaza De La Salud</p>
         </div>

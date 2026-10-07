@@ -88,3 +88,84 @@
 .header-text-container {
   text-align: left;
 }
+
+.cita-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 15px 0;
+  border-bottom: 1px dashed #cfd8dc;
+}
+
+.cita-row:last-child {
+  border-bottom: none;
+}
+
+.cita-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.estado-pendiente, 
+.estado-confirmada {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.estado-cancelada {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.cita-paciente {
+  font-size: 15px;
+  color: #34495e;
+}
+
+.cita-motivo {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.acciones-medico {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.btn-accion {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  transition: opacity 0.2s;
+  flex: 1;
+}
+
+.btn-accion:hover {
+  opacity: 0.8;
+}
+
+.btn-aceptar {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.btn-declinar {
+  background-color: #e74c3c;
+  color: white;
+}

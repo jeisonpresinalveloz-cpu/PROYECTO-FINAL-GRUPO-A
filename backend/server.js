@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
 
+
 // Cargar variables de entorno
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/schedules', require('./src/routes/scheduleRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/appointments', require('./src/routes/appointmentRoutes'));
+app.use('/api/citas', require('./src/routes/citaRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API del Sistema de Citas Médicas funcionando');
