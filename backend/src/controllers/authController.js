@@ -43,20 +43,21 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-        // 1. Buscar si el correo existe en la base de datos
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
-        }
+    if (!user) {
+      console.log("Error de Login: Usuario no encontrado");
+      return res.status(400).json({ mensaje: 'Credenciales inválidas' });
+    }
 
-        // 2. Comparar la contraseña ingresada con la encriptada en Mongo
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
-        }
+    const isMatch = await bcrypt.compare(password, user.password);
+    
+    if (!isMatch) {
+      console.log("Error de Login: La contraseña no coincide en bcrypt");
+      return res.status(400).json({ mensaje: 'Credenciales inválidas' });
+    }
 
         // 3. Generar el Token de acceso
         const token = jwt.sign(
@@ -79,5 +80,28 @@ const loginUser = async (req, res) => {
     }
 };
 
+ const resetPassword = async (req, res) => {
+  try {
+    const { email, nuevaPassword } = req.body;
+
+    // 1. Buscar al usuario por correo
+    const usuario = await User.findOne({ email });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'No existe una cuenta con este correo.' });
+    }
+
+    // 2. Encriptar la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
+
+    await User.updateOne({ email }, { password: hashedPassword });
+
+    res.status(200).json({ mensaje: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión.' });
+  } catch (error) {
+    console.error('Error al restablecer contraseña:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+};
+
 // Exportar ambas funciones
-module.exports = { registerUser, loginUser };
+module.exports = { registerUser, loginUser, resetPassword };

@@ -4,6 +4,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 
 
@@ -34,6 +35,7 @@ app.use('/api/schedules', require('./src/routes/scheduleRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/appointments', require('./src/routes/appointmentRoutes'));
 app.use('/api/citas', require('./src/routes/citaRoutes'));
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
     res.send('API del Sistema de Citas Médicas funcionando');

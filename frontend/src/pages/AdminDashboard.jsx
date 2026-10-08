@@ -1,12 +1,10 @@
-// ==========================================
-// ARCHIVO: pages/AdminDashboard.jsx
-// HISTORIA: HU03 - Catálogo de médicos y horarios
-// ==========================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './AdminDashboard.css'; // Conexión estricta a la hoja de estilos externa
+import './AdminDashboard.css';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +17,32 @@ const AdminDashboard = () => {
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // ESTADO NUEVO: Para los widgets (Inician en 0 hasta conectar al backend)
+  const [stats, setStats] = useState({
+    doctoresRegistrados: 0,
+    citasTotales: 0,
+    citasPendientes: 0,
+    citasCanceladas: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/admin/stats');
+        setStats(res.data);
+      } catch (error) {
+        console.error("Error cargando las estadísticas:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+  
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/');
+  };
 
   // Funciones para manejar los horarios dinámicamente
   const handleAddHorario = () => {
@@ -61,13 +85,63 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-container">
+    <div className="admin-dashboard-container">
+      
+
+
+      <div className="admin-header-top">
+        <div>
+          <h1>Panel de Administración General</h1>
+          <p style={{ color: '#7f8c8d', margin: '5px 0 0 0' }}>Monitoreo del sistema y gestión del personal médico</p>
+        </div>
+        <button className="btn-logout-admin" onClick={handleLogout}>
+          Cerrar Sesión
+        </button>
+      </div>
+
+
+
+      <div className="admin-widgets-grid">
+        <div className="admin-widget w-doctores">
+          <div className="widget-data">
+            <h3>Doctores Activos</h3>
+            <p>{stats.doctoresRegistrados}</p>
+          </div>
+          <div className="widget-icono">👨‍⚕️</div>
+        </div>
+
+        <div className="admin-widget w-totales">
+          <div className="widget-data">
+            <h3>Citas Globales</h3>
+            <p>{stats.citasTotales}</p>
+          </div>
+          <div className="widget-icono">📅</div>
+        </div>
+
+        <div className="admin-widget w-pendientes">
+          <div className="widget-data">
+            <h3>Citas por Aprobar</h3>
+            <p>{stats.citasPendientes}</p>
+          </div>
+          <div className="widget-icono">⏳</div>
+        </div>
+
+        <div className="admin-widget w-canceladas">
+          <div className="widget-data">
+            <h3>Citas Canceladas</h3>
+            <p>{stats.citasCanceladas}</p>
+          </div>
+          <div className="widget-icono">❌</div>
+        </div>
+      </div>
+
+
+
       <div className="admin-card">
         
         <div className="admin-header">
           <div className="admin-icon"></div>
-          <h2 className="admin-title">Panel de Administración</h2>
-          <p className="admin-subtitle">Registro Interno de Personal Médico</p>
+          <h2 className="admin-title">Registro Interno de Personal Médico</h2>
         </div>
         
         {error && <div className="error-message">{error}</div>}
@@ -117,7 +191,6 @@ const AdminDashboard = () => {
             />
           </div>
           
-          {/* Sección dinámica de horarios */}
           <div className="schedule-container">
             <div className="schedule-title">Configuración de Horarios de Atención</div>
             {horarios.map((horario, index) => (

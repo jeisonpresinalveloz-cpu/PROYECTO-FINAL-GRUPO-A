@@ -47,6 +47,12 @@ const MedicoDashboard = () => {
     }
   };
 
+  const stats = {
+    confirmadas: citasAgendadas.filter(cita => cita.estado === 'confirmada').length,
+    pendientes: citasAgendadas.filter(cita => cita.estado === 'pendiente').length,
+    canceladas: citasAgendadas.filter(cita => cita.estado === 'cancelada').length
+  };
+
   return (
     <div className="medico-dashboard-container">
       <div className="header-top">
@@ -56,6 +62,34 @@ const MedicoDashboard = () => {
         </div>
         <button className="logout-button" onClick={handleLogout}>Cerrar Sesión</button>
       </div>
+
+      <div className="widgets-container">
+        <div className="widget-card widget-confirmadas">
+          <div className="widget-info">
+            <h3>Confirmadas</h3>
+            <p>{stats.confirmadas}</p>
+          </div>
+          <div className="widget-icon">✅</div>
+        </div>
+
+        <div className="widget-card widget-pendientes">
+          <div className="widget-info">
+            <h3>Por Aprobar</h3>
+            <p>{stats.pendientes}</p>
+          </div>
+          <div className="widget-icon">⏳</div>
+        </div>
+
+        <div className="widget-card widget-canceladas">
+          <div className="widget-info">
+            <h3>Canceladas</h3>
+            <p>{stats.canceladas}</p>
+          </div>
+          <div className="widget-icon">❌</div>
+        </div>
+      </div>
+
+      
 
       <div className="agenda-card">
         <h2 className="agenda-title">📋 Mis Pacientes para Hoy / Próximos Días</h2>
