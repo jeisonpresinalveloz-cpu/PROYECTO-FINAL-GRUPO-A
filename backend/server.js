@@ -6,6 +6,7 @@ const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
 
 
+
 // Cargar variables de entorno
 dotenv.config();
 

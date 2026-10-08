@@ -1,8 +1,6 @@
-// ==========================================
-// ARCHIVO: src/controllers/citaController.js
-// HISTORIA: HU05 y HU06 - Motor de Reservas
-// ==========================================
 const Cita = require('../models/Cita');
+const User = require('../models/User');
+const { enviarCorreoConfirmacion } = require('../services/emailService');
 
 // HU05: Obtener las horas que YA están ocupadas para un médico en un día
 exports.getHorasOcupadas = async (req, res) => {
@@ -23,26 +21,34 @@ exports.getHorasOcupadas = async (req, res) => {
   }
 };
 
-// HU06: Guardar la cita y bloquear el horario
+// HU06: Crear una nueva reserva de cita y disparar correo (HU09)
 exports.crearCita = async (req, res) => {
   try {
     const { pacienteId, medicoId, dia, horario, motivo } = req.body;
 
-    // Verificación de seguridad: Evitar duplicidad si dos pacientes intentan al mismo tiempo
-    const citaExistente = await Cita.findOne({ 
-      medicoId, dia, horario, estado: { $ne: 'cancelada' } 
-    });
-
-    if (citaExistente) {
-      return res.status(400).json({ mensaje: 'Este horario acaba de ser reservado por otro paciente.' });
-    }
-
+    // 1. Guardamos la cita en la base de datos
     const nuevaCita = new Cita({ pacienteId, medicoId, dia, horario, motivo });
     await nuevaCita.save();
 
-    res.status(201).json({ mensaje: 'Cita agendada exitosamente', cita: nuevaCita });
+    // 2. Buscamos los datos del paciente y el médico para personalizar el correo
+    const paciente = await User.findById(pacienteId);
+    const medico = await User.findById(medicoId);
+
+    // 3. Enviamos el correo de confirmación si encontramos al paciente
+    if (paciente && paciente.email) {
+        await enviarCorreoConfirmacion(
+            paciente.email, 
+            paciente.name, 
+            medico.name, 
+            dia, 
+            horario
+        );
+    }
+
+    res.status(201).json({ mensaje: 'Cita reservada y notificada exitosamente', cita: nuevaCita });
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al procesar la reserva' });
+    console.error('Error en crearCita:', error);
+    res.status(500).json({ mensaje: 'Error al procesar la reserva de la cita' });
   }
 };
 
