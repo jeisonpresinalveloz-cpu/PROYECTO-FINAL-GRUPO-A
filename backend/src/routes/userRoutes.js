@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { getDoctors, updateUserProfile  } = require('../controllers/userController');
 
-// Ruta para obtener la lista de médicos (GET /api/users/doctors)
-router.get('/doctors', getDoctors);
-    
-// Ruta para actualizar el perfil de un usuario (PUT /api/users/profile)
+// IMPORTANTE: Importamos getUsuarios y tus otras funciones desde tu controlador perfecto
+const { getDoctors, updateUserProfile, getUsuarios } = require('../controllers/userController');
+
+// Ruta para actualizar el perfil
 router.put('/profile', updateUserProfile);
+
+// Ruta para obtener todos los usuarios (usada por el PacienteDashboard para listar médicos)
+router.get('/', getUsuarios);
+
+// Ruta original para doctores (si la estabas usando en otro lado)
+router.get('/doctors', getDoctors);
 
 module.exports = router;

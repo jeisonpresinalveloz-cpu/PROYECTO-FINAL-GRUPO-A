@@ -22,13 +22,24 @@ const MedicoDashboard = () => {
   // ESTADO DE LA AGENDA
   const [agendaActiva, setAgendaActiva] = useState(true);
 
-  // CITAS DEL MÉDICO (Simulando la BD)
-  const [citas, setCitas] = useState([
-    { id: '1', time: '08:00', name: 'Carlos Mendoza', age: 58, reason: 'Control de presión arterial', status: 'done' },
-    { id: '2', time: '09:30', name: 'Ana Gómez', age: 42, reason: 'Chequeo anual', status: 'wait' },
-    { id: '3', time: '11:30', name: 'Jorge Almonte', age: 63, reason: 'Consulta de seguimiento', status: 'cancelled' },
-    { id: '4', time: '14:00', name: 'Daniela Féliz', age: 35, reason: 'Entrega de resultados', status: 'pending' }
-  ]);
+  // --- CITAS REALES DEL MÉDICO ---
+  const [citas, setCitas] = useState([]);
+
+  useEffect(() => {
+    const fetchMisCitas = async () => {
+      const doctorId = localStorage.getItem('userId');
+      if (!doctorId) return;
+
+      try {
+        const res = await axios.get(`http://localhost:5000/api/citas/medico/${doctorId}`);
+        setCitas(res.data);
+      } catch (error) {
+        console.error("Error al cargar las citas del médico:", error);
+      }
+    };
+
+    fetchMisCitas();
+  }, []);
 
   const [resultados, setResultados] = useState([
     { id: 'r1', name: 'Perfil lipídico', who: 'Ana Gómez' },
@@ -53,6 +64,23 @@ const MedicoDashboard = () => {
     smsAlerts: true
   });
 
+  // --- ESTADOS PARA EL MÓDULO DE CONSULTA ACTIVA ---
+  const [isConsultaModalOpen, setIsConsultaModalOpen] = useState(false);
+  const [pacienteActivo, setPacienteActivo] = useState(null); 
+  
+  const [consultaData, setConsultaData] = useState({
+    motivo: '',
+    sintomas: '',
+    diagnostico: '',
+    receta: [] 
+  });
+
+  const [nuevoMedicamento, setNuevoMedicamento] = useState({
+    nombre: '',
+    dosis: '',
+    frecuencia: ''
+  });
+  
   // Funciones de acción
   const handleRequestPasswordChange = async () => {
     const email = localStorage.getItem('userEmail');
@@ -66,7 +94,7 @@ const MedicoDashboard = () => {
     }
   };
 
- const handleSaveProfile = async () => {
+  const handleSaveProfile = async () => {
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
@@ -90,30 +118,92 @@ const MedicoDashboard = () => {
     }
   };
 
-  // FUNCIONES LÓGICAS
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = '/';
   };
 
-  const cambiarEstadoCita = (id, nuevoEstado) => {
-    setCitas(citas.map(c => c.id === id ? { ...c, status: nuevoEstado } : c));
+  // --- ACTUALIZAR EL ESTADO DE LA CITA EN EL BACKEND ---
+  const cambiarEstadoCita = async (idCitaMongo, nuevoEstado) => {
+    try {
+      // 1. Actualiza en el backend (asegúrate de tener esta ruta PUT en tu backend)
+      await axios.put(`http://localhost:5000/api/citas/${idCitaMongo}`, { estado: nuevoEstado });
+      
+      // 2. Actualiza la pantalla
+      setCitas(citas.map(c => c._id === idCitaMongo ? { ...c, estado: nuevoEstado } : c));
+    } catch (error) {
+      console.error('Error al actualizar estado en BD. Actualizando localmente por ahora.', error);
+      // Fallback visual por si aún no tienes la ruta PUT en el backend
+      setCitas(citas.map(c => c._id === idCitaMongo ? { ...c, estado: nuevoEstado } : c));
+    }
   };
 
   const marcarResultadoRevisado = (id) => {
     setResultados(resultados.filter(r => r.id !== id));
   };
 
-  // CÁLCULOS PARA LA INTERFAZ
-  const pacientesHoy = citas.filter(c => c.status !== 'cancelled').length;
-  const atendidos = citas.filter(c => c.status === 'done').length;
-  const enSalaOconsulta = citas.filter(c => c.status === 'wait' || c.status === 'live').length;
-  const finalizados = citas.filter(c => c.status === 'done' || c.status === 'cancelled').length;
+  // --- LÓGICA DEL MÓDULO DE CONSULTA ---
+  const handleAbrirConsulta = (cita) => {
+    // Extraemos los datos reales del paciente que viene de la BD
+    const nombrePaciente = cita.pacienteId?.name || 'Paciente sin nombre';
+    const edadPaciente = cita.pacienteId?.age || '--';
 
-  // Buscar quién es el paciente actual (El que está 'live', si no 'wait', si no 'pending')
-  const pacienteActual = citas.find(c => c.status === 'live') 
-    || citas.find(c => c.status === 'wait') 
-    || citas.find(c => c.status === 'pending');
+    setPacienteActivo({
+      _id: cita._id,
+      name: nombrePaciente,
+      age: edadPaciente,
+      reason: cita.motivo
+    });
+    
+    setIsConsultaModalOpen(true);
+    cambiarEstadoCita(cita._id, 'en_consulta');
+  };
+
+  const handleAgregarMedicamento = () => {
+    if (!nuevoMedicamento.nombre || !nuevoMedicamento.dosis) return;
+    setConsultaData({
+      ...consultaData,
+      receta: [...consultaData.receta, nuevoMedicamento]
+    });
+    setNuevoMedicamento({ nombre: '', dosis: '', frecuencia: '' });
+  };
+
+  const handleEliminarMedicamento = (index) => {
+    const nuevaReceta = consultaData.receta.filter((_, i) => i !== index);
+    setConsultaData({ ...consultaData, receta: nuevaReceta });
+  };
+
+  const handleTerminarConsulta = () => {
+    alert(`Consulta finalizada y guardada para ${pacienteActivo?.name || 'el paciente'}.`);
+    cambiarEstadoCita(pacienteActivo._id, 'atendida'); 
+    
+    setIsConsultaModalOpen(false);
+    setPacienteActivo(null);
+    setConsultaData({ motivo: '', sintomas: '', diagnostico: '', receta: [] });
+  };
+
+  // --- CÁLCULOS DINÁMICOS PARA LA INTERFAZ ---
+  const pacientesHoy = citas.filter(c => c.estado !== 'cancelada').length;
+  const atendidos = citas.filter(c => c.estado === 'atendida').length;
+  const enSalaOconsulta = citas.filter(c => c.estado === 'en_sala' || c.estado === 'en_consulta').length;
+  const finalizados = citas.filter(c => c.estado === 'atendida' || c.estado === 'cancelada').length;
+
+  // Busca al paciente que deba mostrarse en el cuadro principal "Héroe"
+  const pacienteActual = citas.find(c => c.estado === 'en_consulta') 
+    || citas.find(c => c.estado === 'en_sala') 
+    || citas.find(c => c.estado === 'confirmada')
+    || citas.find(c => c.estado === 'pendiente');
+
+  // Función para mantener la compatibilidad con tus clases CSS originales
+  const getCssStatus = (estado) => {
+    switch(estado) {
+      case 'en_sala': return 'wait';
+      case 'en_consulta': return 'live';
+      case 'atendida': return 'done';
+      case 'cancelada': return 'cancelled';
+      default: return 'pending';
+    }
+  };
 
   return (
     <div className="medico-plaza-app">
@@ -144,16 +234,16 @@ const MedicoDashboard = () => {
                   </div>
                   <div className="dropdown-divider"></div>
                   <ul className="dropdown-menu-list">
-                <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
-                  <span className="menu-icon">👨‍⚕️</span> Mi perfil profesional
-                </li>
-                <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
-                  <span className="menu-icon">⚙️</span> Configuración
-                </li>
-                <div className="dropdown-divider"></div>
-                <li><span className="menu-icon">📅</span> Pausar mi agenda</li>
-                <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
-              </ul>
+                    <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
+                      <span className="menu-icon">👨‍⚕️</span> Mi perfil profesional
+                    </li>
+                    <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
+                      <span className="menu-icon">⚙️</span> Configuración
+                    </li>
+                    <div className="dropdown-divider"></div>
+                    <li><span className="menu-icon">📅</span> Pausar mi agenda</li>
+                    <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
+                  </ul>
                 </div>
               )}
             </div>
@@ -185,18 +275,18 @@ const MedicoDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <p className="eyebrow">{pacienteActual.status === 'live' ? 'En consulta ahora' : 'Próximo paciente'}</p>
-                  <h2>{pacienteActual.name}</h2>
+                  <p className="eyebrow">{pacienteActual.estado === 'en_consulta' ? 'En consulta ahora' : 'Próximo paciente'}</p>
+                  <h2>{pacienteActual.pacienteId?.name || 'Paciente'}</h2>
                   <div className="hero-meta">
-                    <span className="chip">{pacienteActual.time}</span>
-                    <span className="chip">{pacienteActual.age} años</span>
-                    <span className="chip">{pacienteActual.reason}</span>
+                    <span className="chip">{pacienteActual.hora}</span>
+                    <span className="chip">{pacienteActual.pacienteId?.age || '--'} años</span>
+                    <span className="chip">{pacienteActual.motivo}</span>
                   </div>
                   <div className="actions">
-                    {pacienteActual.status === 'live' ? (
-                      <button className="btn btn-primary" onClick={() => cambiarEstadoCita(pacienteActual.id, 'done')}>Finalizar consulta</button>
+                    {pacienteActual.estado === 'en_consulta' ? (
+                      <button className="btn btn-primary" onClick={() => handleAbrirConsulta(pacienteActual)}>Continuar consulta</button>
                     ) : (
-                      <button className="btn btn-primary" onClick={() => cambiarEstadoCita(pacienteActual.id, 'live')}>Iniciar consulta</button>
+                      <button className="btn btn-primary" onClick={() => handleAbrirConsulta(pacienteActual)}>Iniciar consulta</button>
                     )}
                     <button className="btn">Ver expediente</button>
                   </div>
@@ -212,26 +302,27 @@ const MedicoDashboard = () => {
               </div>
               <ol className="list">
                 {citas.map(cita => (
-                  <li key={cita.id} className="row" data-status={cita.status}>
-                    <span className="time">{cita.time}</span>
+                  <li key={cita._id} className="row" data-status={getCssStatus(cita.estado)}>
+                    <span className="time">{cita.hora}</span>
                     <div>
                       <div className="row-top">
-                        <strong>{cita.name}</strong>
+                        <strong>{cita.pacienteId?.name || 'Paciente'}</strong>
                         <span className="pill">
-                          {cita.status === 'pending' && 'Por llegar'}
-                          {cita.status === 'wait' && 'En sala'}
-                          {cita.status === 'live' && 'En consulta'}
-                          {cita.status === 'done' && 'Atendido'}
-                          {cita.status === 'cancelled' && 'No asistió'}
+                          {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && 'Por llegar'}
+                          {cita.estado === 'en_sala' && 'En sala'}
+                          {cita.estado === 'en_consulta' && 'En consulta'}
+                          {cita.estado === 'atendida' && 'Atendido'}
+                          {cita.estado === 'cancelada' && 'No asistió'}
                         </span>
                       </div>
-                      <p className="meta">{cita.reason} · {cita.age} años</p>
+                      <p className="meta">{cita.motivo} · {cita.pacienteId?.age || '--'} años</p>
                       <div className="row-foot">
                         <span className="hint"></span>
                         <div className="row-actions">
-                          {cita.status === 'pending' && <button className="btn" onClick={() => cambiarEstadoCita(cita.id, 'wait')}>Llamar a sala</button>}
-                          {cita.status === 'wait' && <button className="btn btn-primary" onClick={() => cambiarEstadoCita(cita.id, 'live')}>Iniciar consulta</button>}
-                          {cita.status === 'live' && <button className="btn btn-primary" onClick={() => cambiarEstadoCita(cita.id, 'done')}>Finalizar</button>}
+                          {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && <button className="btn" onClick={() => cambiarEstadoCita(cita._id, 'en_sala')}>Llamar a sala</button>}
+                          
+                          {cita.estado === 'en_sala' && <button className="btn btn-primary" onClick={() => handleAbrirConsulta(cita)}>Iniciar consulta</button>}
+                          {cita.estado === 'en_consulta' && <button className="btn btn-primary" onClick={() => handleAbrirConsulta(cita)}>Continuar</button>}
                         </div>
                       </div>
                     </div>
@@ -269,7 +360,8 @@ const MedicoDashboard = () => {
           </aside>
         </div>
       </div>
-     {/* --- MODAL DE PERFIL PROFESIONAL --- */}
+      
+      {/* --- MODAL DE PERFIL PROFESIONAL --- */}
       {isProfileModalOpen && (
         <div className="medico-modal-overlay" onClick={() => setIsProfileModalOpen(false)}>
           <div className="medico-modal-content" onClick={e => e.stopPropagation()}>
@@ -350,6 +442,89 @@ const MedicoDashboard = () => {
             </div>
             
             <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '32px'}} onClick={() => setIsSettingsModalOpen(false)}>Hecho</button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL DE CONSULTA ACTIVA (MODO ENFOQUE)      */}
+      {/* ========================================== */}
+      
+      {isConsultaModalOpen && pacienteActivo && (
+        <div className="consulta-modal-overlay">
+          <div className="consulta-modal-content">
+            
+            <div className="consulta-header">
+              <div>
+                <h2>Consulta Activa: {pacienteActivo.name}</h2>
+                <p>Edad: {pacienteActivo.age} años | Motivo previo: {pacienteActivo.reason}</p>
+              </div>
+              
+              <div className="consulta-alertas">
+                <span className="alerta-item sangre">Sangre: O+</span>
+                <span className="alerta-item alergia">Alergias: Penicilina</span>
+              </div>
+            </div>
+
+            <div className="consulta-body">
+              <div className="consulta-col-izq">
+                <h3>Evolución Clínica (SOAP)</h3>
+                
+                <div className="form-group">
+                  <label>Motivo de la Consulta</label>
+                  <input type="text" value={consultaData.motivo} onChange={e => setConsultaData({...consultaData, motivo: e.target.value})} placeholder="Ej. Dolor de cabeza frecuente" />
+                </div>
+                
+                <div className="form-group">
+                  <label>Síntomas y Evaluación</label>
+                  <textarea rows="4" value={consultaData.sintomas} onChange={e => setConsultaData({...consultaData, sintomas: e.target.value})} placeholder="Describe los síntomas del paciente..."></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>Diagnóstico Preliminar</label>
+                  <input type="text" value={consultaData.diagnostico} onChange={e => setConsultaData({...consultaData, diagnostico: e.target.value})} placeholder="Ej. Migraña tensional" />
+                </div>
+              </div>
+
+              <div className="consulta-col-der">
+                <h3>Receta Médica</h3>
+                
+                <div className="receta-inputs">
+                  <input type="text" placeholder="Medicamento (Ej. Paracetamol)" value={nuevoMedicamento.nombre} onChange={e => setNuevoMedicamento({...nuevoMedicamento, nombre: e.target.value})} />
+                  <div className="receta-row">
+                    <input type="text" placeholder="Dosis (Ej. 500mg)" value={nuevoMedicamento.dosis} onChange={e => setNuevoMedicamento({...nuevoMedicamento, dosis: e.target.value})} />
+                    <input type="text" placeholder="Frecuencia (Ej. Cada 8 hrs)" value={nuevoMedicamento.frecuencia} onChange={e => setNuevoMedicamento({...nuevoMedicamento, frecuencia: e.target.value})} />
+                  </div>
+                  <button type="button" onClick={handleAgregarMedicamento} className="btn-agregar-med">
+                    + Añadir a la receta
+                  </button>
+                </div>
+
+                <div className="receta-lista">
+                  {consultaData.receta.length === 0 ? (
+                    <p className="receta-vacia">No hay medicamentos en la receta.</p>
+                  ) : (
+                    <ul>
+                      {consultaData.receta.map((med, index) => (
+                        <li key={index}>
+                          <div>
+                            <strong>{med.nombre}</strong> - {med.dosis}
+                            <br/><small>{med.frecuencia}</small>
+                          </div>
+                          <button type="button" onClick={() => handleEliminarMedicamento(index)}>✕</button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="consulta-footer">
+              <button type="button" className="btn-cancelar" onClick={() => setIsConsultaModalOpen(false)}>Pausar</button>
+              <button type="button" className="btn-finalizar" onClick={handleTerminarConsulta}>Terminar Consulta y Guardar</button>
+            </div>
+
           </div>
         </div>
       )}

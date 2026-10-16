@@ -47,6 +47,25 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// Agrega o modifica esta función en tu userController.js
+const getUsuarios = async (req, res) => {
+  try {
+    const roleFiltro = req.query.role; // Captura si en la URL dice ?role=medico
+    
+    let query = {};
+    if (roleFiltro) {
+      query.role = roleFiltro; // Filtra en la base de datos solo por el rol pedido
+    }
+
+    // Busca en la BD, excluyendo la contraseña
+    const usuarios = await User.find(query).select('-password');
+    res.json(usuarios);
+
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener usuarios', error: error.message });
+  }
+};
 
 
-module.exports = { getDoctors, updateUserProfile };
+
+module.exports = { getDoctors, updateUserProfile, getUsuarios };

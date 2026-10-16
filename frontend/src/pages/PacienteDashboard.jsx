@@ -9,13 +9,13 @@ const PacienteDashboard = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsDropdownOpen(false);
-  };
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   // --- Estados del Modal ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,9 +29,9 @@ useEffect(() => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
-// Datos temporales para el formulario del perfil
+  // Datos temporales para el formulario del perfil
   const [profileData, setProfileData] = useState({
-    name: localStorage.getItem('userName') || '', // <-- Leemos directamente de la memoria aquí
+    name: localStorage.getItem('userName') || '',
     email: localStorage.getItem('userEmail') || '',
     phone: '',
     bloodType: '',
@@ -61,8 +61,6 @@ useEffect(() => {
 
   const handleSaveProfile = async () => {
     try {
-      // Obtenemos el ID del paciente que guardaste al iniciar sesión
-      // (Si en tu Login guardaste el id con otro nombre como '_id', asegúrate de cambiarlo aquí)
       const userId = localStorage.getItem('userId'); 
 
       if (!userId) {
@@ -70,7 +68,6 @@ useEffect(() => {
         return;
       }
 
-      // Enviamos la información al backend
       const res = await axios.put('http://localhost:5000/api/users/profile', {
         userId,
         name: profileData.name,
@@ -79,12 +76,10 @@ useEffect(() => {
         allergies: profileData.allergies
       });
 
-      // Si el paciente cambió su nombre, actualizamos la memoria para que 
-      // la interfaz (como el Hola, María) se actualice sin tener que recargar.
       localStorage.setItem('userName', profileData.name);
       
       alert('Perfil actualizado exitosamente.');
-      setIsProfileModalOpen(false); // Cerramos el modal de forma elegante
+      setIsProfileModalOpen(false); 
 
     } catch (error) {
       alert(error.response?.data?.mensaje || 'Error al guardar los cambios del perfil');
@@ -92,11 +87,23 @@ useEffect(() => {
     }
   };
   
-  // Lista temporal de médicos (Idealmente cargar del backend)
-  const [medicosDisponibles, setMedicosDisponibles] = useState([
-    { _id: '1', name: 'Dra. Lucía Herrera', especialidad: 'Medicina general' },
-    { _id: '2', name: 'Dr. Mateo Ortiz', especialidad: 'Cardiología' }
-  ]);
+  // --- CARGA DINÁMICA DE MÉDICOS DESDE EL BACKEND ---
+  const [medicosDisponibles, setMedicosDisponibles] = useState([]);
+
+  useEffect(() => {
+    const fetchMedicos = async () => {
+      try {
+        // Obtenemos todos los usuarios que tengan el rol de 'medico'
+        const res = await axios.get('http://localhost:5000/api/users?role=medico');
+        
+        // Si tu backend devuelve directamente el arreglo:
+        setMedicosDisponibles(res.data);
+      } catch (error) {
+        console.error("Error al cargar la lista de médicos:", error);
+      }
+    };
+    fetchMedicos();
+  }, []);
 
   const userName = localStorage.getItem('userName') || 'Paciente';
   const userId = localStorage.getItem('userId');
@@ -147,8 +154,6 @@ useEffect(() => {
   // 3. Cancelar Cita (Solo si está pendiente o confirmada)
   const handleCancelarCita = async (id) => {
     try {
-      // Idealmente harías un PUT a tu backend: axios.put(`/api/citas/${id}`, { estado: 'cancelada' })
-      // Por ahora actualizamos el estado local:
       setCitas(citas.map(c => c._id === id ? { ...c, estado: 'cancelada' } : c));
       setConfirmId(null);
     } catch (error) {
@@ -172,47 +177,46 @@ useEffect(() => {
     <div className="mi-salud-app">
       <div className="wrap">
         
-        {/* Cabecera (Idéntica al HTML original) */}
         <header className="top">
-  <div className="brand">
-    <span className="brand-mark" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4.5l2.5-6 4 12 2.5-6H22"/></svg>
-    </span>
-    <div><strong>Mi Salud</strong><small>Plaza De La Salud</small></div>
-  </div>
-  <div className="top-actions" ref={dropdownRef}>
-    <div style={{ position: 'relative' }}>
-      <span className="avatar" onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{ cursor: 'pointer' }}>
-        {getInitials(userName)}
-      </span>
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4.5l2.5-6 4 12 2.5-6H22"/></svg>
+            </span>
+            <div><strong>Mi Salud</strong><small>Plaza De La Salud</small></div>
+          </div>
+          <div className="top-actions" ref={dropdownRef}>
+            <div style={{ position: 'relative' }}>
+              <span className="avatar" onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{ cursor: 'pointer' }}>
+                {getInitials(userName)}
+              </span>
 
-      {isDropdownOpen && (
-        <div className="profile-dropdown">
-          <div className="dropdown-header">
-            <div className="dropdown-avatar">{getInitials(userName)}</div>
-            <div className="dropdown-user-info">
-              <strong>{userName}</strong>
-              <span>{localStorage.getItem('userEmail') || 'paciente@correo.com'}</span>
+              {isDropdownOpen && (
+                <div className="profile-dropdown">
+                  <div className="dropdown-header">
+                    <div className="dropdown-avatar">{getInitials(userName)}</div>
+                    <div className="dropdown-user-info">
+                      <strong>{userName}</strong>
+                      <span>{localStorage.getItem('userEmail') || 'paciente@correo.com'}</span>
+                    </div>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <ul className="dropdown-menu-list">
+                    <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
+                      <span className="menu-icon">👤</span> Mi perfil
+                    </li>
+                    <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
+                      <span className="menu-icon">⚙️</span> Configuración
+                    </li>
+                    <div className="dropdown-divider"></div>
+                    <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
-          <div className="dropdown-divider"></div>
-          <ul className="dropdown-menu-list">
-                <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
-                  <span className="menu-icon">👤</span> Mi perfil
-                </li>
-                <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
-                  <span className="menu-icon">⚙️</span> Configuración
-                </li>
-                <div className="dropdown-divider"></div>
-                <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
-              </ul>
-        </div>
-      )}
-    </div>
-  </div>
-</header>
+        </header>
 
-        <section className="greet">+
+        <section className="greet">
           <p className="eyebrow">Hoy</p>
           <h1>Hola, {primerNombre}</h1>
           <p className="lede">Tienes {citasFiltradas.length} citas en esta sección.</p>
@@ -341,9 +345,15 @@ useEffect(() => {
                 <label>Especialista</label>
                 <select value={medicoId} onChange={(e) => setMedicoId(e.target.value)} required>
                   <option value="">Selecciona un médico...</option>
-                  {medicosDisponibles.map(med => (
-                    <option key={med._id} value={med._id}>{med.name} - {med.especialidad}</option>
-                  ))}
+                  {medicosDisponibles.length > 0 ? (
+                    medicosDisponibles.map(med => (
+                      <option key={med._id} value={med._id}>
+                        {med.name} - {med.especialidad || 'Sin especialidad'}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>Cargando médicos disponibles...</option>
+                  )}
                 </select>
               </div>
               <div className="form-row">
@@ -365,6 +375,7 @@ useEffect(() => {
           </div>
         </div>
       )}
+
       {/* --- MODAL DE MI PERFIL --- */}
       {isProfileModalOpen && (
         <div className="modal-overlay" onClick={() => setIsProfileModalOpen(false)}>
