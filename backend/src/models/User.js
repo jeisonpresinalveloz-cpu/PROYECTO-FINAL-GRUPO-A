@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['paciente', 'medico', 'admin'], default: 'paciente' },
+  phone: { type: String, default: '' },
+  bloodType: { type: String, default: '' },
+  allergies: { type: String, default: '' },
+  exequatur: { type: String, default: '' }, // Número de licencia del médico
 
   especialidad: { 
     type: String, 

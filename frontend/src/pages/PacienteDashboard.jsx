@@ -24,6 +24,73 @@ useEffect(() => {
   const [hora, setHora] = useState('');
   const [motivo, setMotivo] = useState('');
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+
+  // --- Estados para Nuevos Modales ---
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  
+// Datos temporales para el formulario del perfil
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('userName') || '', // <-- Leemos directamente de la memoria aquí
+    email: localStorage.getItem('userEmail') || '',
+    phone: '',
+    bloodType: '',
+    allergies: ''
+  });
+
+  // Datos temporales para la configuración
+  const [settingsData, setSettingsData] = useState({
+    emailNotifications: true,
+    smsNotifications: false,
+    darkMode: true
+  });
+
+  const handleRequestPasswordChange = async () => {
+    const email = localStorage.getItem('userEmail');
+    if (!email) return;
+
+    try {
+      await axios.post('http://localhost:5000/api/auth/olvide-password', { email });
+      alert('Se ha enviado un enlace seguro a tu correo para cambiar la contraseña.');
+      setIsSettingsModalOpen(false);
+    } catch (error) {
+      alert('Hubo un error al solicitar el cambio de contraseña. Intenta de nuevo.');
+      console.error(error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      // Obtenemos el ID del paciente que guardaste al iniciar sesión
+      // (Si en tu Login guardaste el id con otro nombre como '_id', asegúrate de cambiarlo aquí)
+      const userId = localStorage.getItem('userId'); 
+
+      if (!userId) {
+        alert('Error: No se encontró la sesión del usuario.');
+        return;
+      }
+
+      // Enviamos la información al backend
+      const res = await axios.put('http://localhost:5000/api/users/profile', {
+        userId,
+        name: profileData.name,
+        phone: profileData.phone,
+        bloodType: profileData.bloodType,
+        allergies: profileData.allergies
+      });
+
+      // Si el paciente cambió su nombre, actualizamos la memoria para que 
+      // la interfaz (como el Hola, María) se actualice sin tener que recargar.
+      localStorage.setItem('userName', profileData.name);
+      
+      alert('Perfil actualizado exitosamente.');
+      setIsProfileModalOpen(false); // Cerramos el modal de forma elegante
+
+    } catch (error) {
+      alert(error.response?.data?.mensaje || 'Error al guardar los cambios del perfil');
+      console.error(error);
+    }
+  };
   
   // Lista temporal de médicos (Idealmente cargar del backend)
   const [medicosDisponibles, setMedicosDisponibles] = useState([
@@ -130,18 +197,22 @@ useEffect(() => {
           </div>
           <div className="dropdown-divider"></div>
           <ul className="dropdown-menu-list">
-            <li><span className="menu-icon">👤</span> Mi perfil</li>
-            <li><span className="menu-icon">⚙️</span> Configuración</li>
-            <div className="dropdown-divider"></div>
-            <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
-          </ul>
+                <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
+                  <span className="menu-icon">👤</span> Mi perfil
+                </li>
+                <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
+                  <span className="menu-icon">⚙️</span> Configuración
+                </li>
+                <div className="dropdown-divider"></div>
+                <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
+              </ul>
         </div>
       )}
     </div>
   </div>
 </header>
 
-        <section className="greet">
+        <section className="greet">+
           <p className="eyebrow">Hoy</p>
           <h1>Hola, {primerNombre}</h1>
           <p className="lede">Tienes {citasFiltradas.length} citas en esta sección.</p>
@@ -291,6 +362,106 @@ useEffect(() => {
               </div>
               <button type="submit" className="btn btn-primary" style={{width: '100%', marginTop: '10px'}}>Solicitar Cita</button>
             </form>
+          </div>
+        </div>
+      )}
+      {/* --- MODAL DE MI PERFIL --- */}
+      {isProfileModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="modal-content profile-modal" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setIsProfileModalOpen(false)}>✕</button>
+            <div className="modal-header-flex">
+               <div className="dropdown-avatar modal-avatar-large">{getInitials(profileData.name)}</div>
+               <div>
+                 <h2>Mi Perfil Médico</h2>
+                 <p className="hint">Actualiza tu información personal y clínica básica.</p>
+               </div>
+            </div>
+
+            <form className="agendar-form" style={{ marginTop: '24px' }}>
+              <div className="form-group">
+                <label>Nombre Completo</label>
+                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} />
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Correo Electrónico</label>
+                  <input type="email" value={profileData.email} disabled style={{opacity: 0.7, cursor: 'not-allowed'}} />
+                </div>
+                <div className="form-group">
+                  <label>Teléfono de Contacto</label>
+                  <input type="tel" placeholder="Ej. 809-555-0199" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Tipo de Sangre</label>
+                  <select value={profileData.bloodType} onChange={(e) => setProfileData({...profileData, bloodType: e.target.value})}>
+                    <option value="">Seleccionar...</option>
+                    <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
+                    <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Alergias Conocidas</label>
+                  <input type="text" placeholder="Ej. Penicilina, Ninguna..." value={profileData.allergies} onChange={(e) => setProfileData({...profileData, allergies: e.target.value})} />
+                </div>
+              </div>
+              
+              <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '16px'}} onClick={handleSaveProfile}>
+                Guardar Cambios
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE CONFIGURACIÓN --- */}
+      {isSettingsModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsSettingsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setIsSettingsModalOpen(false)}>✕</button>
+            <h2>Configuración de la Cuenta</h2>
+            <p className="hint" style={{marginBottom: '24px'}}>Gestiona tus preferencias y notificaciones.</p>
+
+            <div className="settings-section">
+              <h3>Notificaciones</h3>
+              <div className="setting-row">
+                <div>
+                  <strong>Correos Electrónicos</strong>
+                  <span className="hint-block">Recibir recordatorios de citas y resultados.</span>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={settingsData.emailNotifications} onChange={(e) => setSettingsData({...settingsData, emailNotifications: e.target.checked})} />
+                  <span className="slider"></span>
+                </label>
+              </div>
+              <div className="setting-row">
+                <div>
+                  <strong>Mensajes SMS</strong>
+                  <span className="hint-block">Alertas urgentes a tu número de contacto.</span>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={settingsData.smsNotifications} onChange={(e) => setSettingsData({...settingsData, smsNotifications: e.target.checked})} />
+                  <span className="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="settings-section" style={{marginTop: '24px'}}>
+              <h3>Seguridad</h3>
+              <button 
+              className="btn btn-ghost" 
+              style={{width: '100%', justifyContent: 'flex-start', padding: '12px', marginTop: '8px', border: '1px solid var(--line)'}}
+              onClick={handleRequestPasswordChange}
+              >
+              Cambiar mi contraseña
+              </button>
+            </div>
+            
+            <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '32px'}} onClick={() => setIsSettingsModalOpen(false)}>Hecho</button>
           </div>
         </div>
       )}

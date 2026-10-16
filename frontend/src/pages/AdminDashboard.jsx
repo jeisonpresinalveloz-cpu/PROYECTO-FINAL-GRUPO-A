@@ -29,6 +29,10 @@ const AdminDashboard = () => {
   const [horarios, setHorarios] = useState([{ dia: 'Lunes', horaInicio: '08:00', horaFin: '12:00' }]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Estado para controlar la vista actual del administrador (por defecto 'resumen')
+  const [activeView, setActiveView] = useState('resumen');
+  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
 
   const userName = localStorage.getItem('userName') || 'Ricardo Peña';
   const getInitials = (name) => name.slice(0, 2).toUpperCase();
@@ -104,119 +108,208 @@ const AdminDashboard = () => {
           <span className="brand-mark" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4.5l2.5-6 4 12 2.5-6H22"/></svg>
           </span>
-          <div><strong>Administración</strong><small>Horizonte</small></div>
+          <div><strong>Administración</strong><small>Plaza De La Salud</small></div>
         </div>
-        <nav>
+        
+       <nav>
           <ul className="nav">
-            <li><button type="button" aria-current="page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"><path d="M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z"/></svg>Resumen</button></li>
-            <li><button type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Citas</button></li>
-            <li><button type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11l2 2 4-4"/></svg>Médicos</button></li>
-            <li><button type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>Pacientes</button></li>
-            <li><button type="button" onClick={handleLogout}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Cerrar Sesión</button></li>
+            <li>
+              <button 
+                aria-current={activeView === 'resumen' ? 'page' : undefined} 
+                onClick={() => setActiveView('resumen')}
+              >
+                <span className="icon">📊</span> Resumen
+              </button>
+            </li>
+            <li>
+              <button 
+                aria-current={activeView === 'citas' ? 'page' : undefined} 
+                onClick={() => setActiveView('citas')}
+              >
+                <span className="icon">🗓️</span> Citas
+              </button>
+            </li>
+            <li>
+              <button 
+                aria-current={activeView === 'medicos' ? 'page' : undefined} 
+                onClick={() => setActiveView('medicos')}
+              >
+                <span className="icon">👨‍⚕️</span> Médicos
+              </button>
+            </li>
+            <li>
+              <button 
+                aria-current={activeView === 'pacientes' ? 'page' : undefined} 
+                onClick={() => setActiveView('pacientes')}
+              >
+                <span className="icon">🏥</span> Pacientes
+              </button>
+            </li>
           </ul>
         </nav>
-        <div className="rail-foot">
+        
+        <div 
+          className="rail-foot" 
+          onClick={() => setIsAdminSettingsOpen(true)}
+          style={{ cursor: 'pointer', transition: 'background 0.2s' }}
+          title="Configuración de Administrador"
+        >
           <span className="avatar" aria-hidden="true">{getInitials(userName)}</span>
           <div><strong>{userName}</strong><small>Administrador</small></div>
         </div>
       </aside>
 
       <main className="main">
-        <header className="top">
-          <div>
-            <p className="eyebrow">Hoy</p>
-            <h1>Resumen general</h1>
-          </div>
-          <div className="top-actions">
-            <div className="seg" role="group">
-              <button type="button" onClick={() => setRange(7)} aria-pressed={range === 7}>7 días</button>
-              <button type="button" onClick={() => setRange(30)} aria-pressed={range === 30}>30 días</button>
+        {/* --- CONTENIDO DINÁMICO SEGÚN LA VISTA ACTIVA --- */}
+        
+        {/* VISTA: RESUMEN */}
+        {activeView === 'resumen' && (
+          <>
+            <header className="top">
+              <div>
+                <p className="eyebrow">Hoy</p>
+                <h1>Resumen general</h1>
+              </div>
+              <div className="top-actions">
+                <div className="seg" role="group">
+                  <button type="button" onClick={() => setRange(7)} aria-pressed={range === 7}>7 días</button>
+                  <button type="button" onClick={() => setRange(30)} aria-pressed={range === 30}>30 días</button>
+                </div>
+                {/* BOTÓN PARA ABRIR MODAL */}
+                <button className="btn btn-primary" type="button" onClick={() => setIsModalOpen(true)}>
+                  + Registrar Médico
+                </button>
+              </div>
+            </header>
+
+            <section className="kpis">
+              <article className="kpi"><span className="kpi-label">Citas Globales</span><strong>{stats.citasTotales}</strong><span className="delta">+8% vs anterior</span></article>
+              <article className="kpi"><span className="kpi-label">Doctores Activos</span><strong>{stats.doctoresRegistrados}</strong><span className="delta">+2 pts vs anterior</span></article>
+              <article className="kpi"><span className="kpi-label">Citas por Aprobar</span><strong>{stats.citasPendientes}</strong><span className="delta down">-1 pt vs anterior</span></article>
+              <article className="kpi"><span className="kpi-label">Citas Canceladas</span><strong>{stats.citasCanceladas}</strong><span className="delta down">+5 vs anterior</span></article>
+            </section>
+
+            <div className="split">
+              <section className="panel">
+                <div className="panel-head">
+                  <div><h2>Citas por día</h2><p className="hint">Últimos 14 días</p></div>
+                  <div className="legend"><span>Citas programadas</span></div>
+                </div>
+                <svg className="chart" viewBox="0 0 640 240">
+                  <defs>
+                    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: .28 }}/>
+                      <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }}/>
+                    </linearGradient>
+                  </defs>
+                  {[0, 10, 20, 30].map(g => {
+                    const y = pt + ph - (g / max) * ph;
+                    return (
+                      <g key={g}>
+                        <line x1={pl} x2={W - pr} y1={y} y2={y} style={{ stroke: 'var(--line)' }} strokeWidth="1" />
+                        <text x={pl - 8} y={y + 4} textAnchor="end" style={{ fill: 'var(--muted)' }} fontSize="11">{g}</text>
+                      </g>
+                    );
+                  })}
+                  {pts.map(p => p.i % 2 === 0 && <text key={p.i} x={p.x} y={H - 8} textAnchor="middle" style={{ fill: 'var(--muted)' }} fontSize="11">{p.v}</text>)}
+                  <path d={areaPath} fill="url(#fill)"/>
+                  <path d={linePath} fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+                  {pts.map(p => {
+                    const last = p.i === n - 1;
+                    return <circle key={p.i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r={last ? 6 : 3.5} style={{ fill: last ? 'var(--accent)' : 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="2" />;
+                  })}
+                </svg>
+              </section>
+
+              <section className="panel">
+                <div className="panel-head"><h2>Incidencias</h2><span className="hint">{incidents.length} abiertas</span></div>
+                <ul className="inc">
+                  {incidents.map(i => (
+                    <li key={i.id} data-sev={i.sev}>
+                      <div><strong>{i.title}</strong><small>{i.sub}</small></div>
+                      <button className="btn" onClick={() => handleResolve(i.id)}>Resolver</button>
+                    </li>
+                  ))}
+                </ul>
+                {incidents.length === 0 && <p className="empty">No hay incidencias abiertas.</p>}
+              </section>
             </div>
-            {/* BOTÓN PARA ABRIR MODAL */}
-            <button className="btn btn-primary" type="button" onClick={() => setIsModalOpen(true)}>
-              + Registrar Médico
-            </button>
+
+            <section className="panel">
+              <div className="panel-head"><div><h2>Médicos y disponibilidad</h2><p className="hint">Ocupación de hoy por médico</p></div></div>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>Médico</th><th>Citas hoy</th><th>Ocupación</th><th>Estado</th><th></th></tr></thead>
+                  <tbody>
+                    {docs.map(d => (
+                      <tr key={d.id}>
+                        <td><strong>{d.name}</strong><small>{d.spec}</small></td>
+                        <td className="num">{d.today}</td>
+                        <td><span className="bar"><i style={{ width: `${Math.round((d.today / d.max) * 100)}%` }}></i></span></td>
+                        <td><span className="pill" data-s={d.status}>{{ free: 'Disponible', busy: 'Ocupado', leave: 'De licencia' }[d.status]}</span></td>
+                        <td style={{ textAlign: 'right' }}><button className="btn btn-ghost" onClick={() => toggleDocState(d.id)}>{d.active ? 'Pausar agenda' : 'Reactivar'}</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* VISTA: CITAS */}
+        {activeView === 'citas' && (
+          <div className="view-container">
+            <header className="top" style={{borderBottom: 'none'}}>
+              <div>
+                <p className="eyebrow">Gestión</p>
+                <h1>Todas las Citas</h1>
+              </div>
+            </header>
+            <section className="panel" style={{marginTop: '20px', padding: '40px', textAlign: 'center'}}>
+              <h2 style={{color: 'var(--text-secondary)'}}>Módulo en construcción</h2>
+              <p style={{color: 'var(--muted)'}}>Aquí se mostrará el historial completo de citas de la clínica.</p>
+            </section>
           </div>
-        </header>
+        )}
 
-        <section className="kpis">
-          <article className="kpi"><span className="kpi-label">Citas Globales</span><strong>{stats.citasTotales}</strong><span className="delta">+8% vs anterior</span></article>
-          <article className="kpi"><span className="kpi-label">Doctores Activos</span><strong>{stats.doctoresRegistrados}</strong><span className="delta">+2 pts vs anterior</span></article>
-          <article className="kpi"><span className="kpi-label">Citas por Aprobar</span><strong>{stats.citasPendientes}</strong><span className="delta down">-1 pt vs anterior</span></article>
-          <article className="kpi"><span className="kpi-label">Citas Canceladas</span><strong>{stats.citasCanceladas}</strong><span className="delta down">+5 vs anterior</span></article>
-        </section>
-
-        <div className="split">
-          <section className="panel">
-            <div className="panel-head">
-              <div><h2>Citas por día</h2><p className="hint">Últimos 14 días</p></div>
-              <div className="legend"><span>Citas programadas</span></div>
-            </div>
-            <svg className="chart" viewBox="0 0 640 240">
-              <defs>
-                <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: .28 }}/>
-                  <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }}/>
-                </linearGradient>
-              </defs>
-              {[0, 10, 20, 30].map(g => {
-                const y = pt + ph - (g / max) * ph;
-                return (
-                  <g key={g}>
-                    <line x1={pl} x2={W - pr} y1={y} y2={y} style={{ stroke: 'var(--line)' }} strokeWidth="1" />
-                    <text x={pl - 8} y={y + 4} textAnchor="end" style={{ fill: 'var(--muted)' }} fontSize="11">{g}</text>
-                  </g>
-                );
-              })}
-              {pts.map(p => p.i % 2 === 0 && <text key={p.i} x={p.x} y={H - 8} textAnchor="middle" style={{ fill: 'var(--muted)' }} fontSize="11">{p.v}</text>)}
-              <path d={areaPath} fill="url(#fill)"/>
-              <path d={linePath} fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-              {pts.map(p => {
-                const last = p.i === n - 1;
-                return <circle key={p.i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r={last ? 6 : 3.5} style={{ fill: last ? 'var(--accent)' : 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth="2" />;
-              })}
-            </svg>
-          </section>
-
-          <section className="panel">
-            <div className="panel-head"><h2>Incidencias</h2><span className="hint">{incidents.length} abiertas</span></div>
-            <ul className="inc">
-              {incidents.map(i => (
-                <li key={i.id} data-sev={i.sev}>
-                  <div><strong>{i.title}</strong><small>{i.sub}</small></div>
-                  <button className="btn" onClick={() => handleResolve(i.id)}>Resolver</button>
-                </li>
-              ))}
-            </ul>
-            {incidents.length === 0 && <p className="empty">No hay incidencias abiertas.</p>}
-          </section>
-        </div>
-
-        <section className="panel">
-          <div className="panel-head"><div><h2>Médicos y disponibilidad</h2><p className="hint">Ocupación de hoy por médico</p></div></div>
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Médico</th><th>Citas hoy</th><th>Ocupación</th><th>Estado</th><th></th></tr></thead>
-              <tbody>
-                {docs.map(d => (
-                  <tr key={d.id}>
-                    <td><strong>{d.name}</strong><small>{d.spec}</small></td>
-                    <td className="num">{d.today}</td>
-                    <td><span className="bar"><i style={{ width: `${Math.round((d.today / d.max) * 100)}%` }}></i></span></td>
-                    <td><span className="pill" data-s={d.status}>{{ free: 'Disponible', busy: 'Ocupado', leave: 'De licencia' }[d.status]}</span></td>
-                    <td style={{ textAlign: 'right' }}><button className="btn btn-ghost" onClick={() => toggleDocState(d.id)}>{d.active ? 'Pausar agenda' : 'Reactivar'}</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* VISTA: MÉDICOS */}
+        {activeView === 'medicos' && (
+          <div className="view-container">
+            <header className="top" style={{borderBottom: 'none'}}>
+              <div>
+                <p className="eyebrow">Personal</p>
+                <h1>Directorio Médico</h1>
+              </div>
+            </header>
+            <section className="panel" style={{marginTop: '20px', padding: '40px', textAlign: 'center'}}>
+              <h2 style={{color: 'var(--text-secondary)'}}>Módulo en construcción</h2>
+              <p style={{color: 'var(--muted)'}}>Aquí se listarán todos los médicos registrados y sus horarios.</p>
+            </section>
           </div>
-        </section>
+        )}
+
+        {/* VISTA: PACIENTES */}
+        {activeView === 'pacientes' && (
+          <div className="view-container">
+            <header className="top" style={{borderBottom: 'none'}}>
+              <div>
+                <p className="eyebrow">Directorio</p>
+                <h1>Registro de Pacientes</h1>
+              </div>
+            </header>
+            <section className="panel" style={{marginTop: '20px', padding: '40px', textAlign: 'center'}}>
+              <h2 style={{color: 'var(--text-secondary)'}}>Módulo en construcción</h2>
+              <p style={{color: 'var(--muted)'}}>Aquí se mostrará la base de datos de pacientes y sus historiales.</p>
+            </section>
+          </div>
+        )}
+
       </main>
 
       {/* --- MODAL FLOTANTE: REGISTRO DE MÉDICO --- */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          {/* Evitamos que el click dentro del modal lo cierre */}
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="btn-close-modal" onClick={() => setIsModalOpen(false)}>✕</button>
             
@@ -277,6 +370,43 @@ const AdminDashboard = () => {
               
               <button type="submit" className="btn-submit-hz">Registrar Médico en el Sistema</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE CONFIGURACIÓN DEL ADMIN --- */}
+      {isAdminSettingsOpen && (
+        <div className="modal-overlay" onClick={() => setIsAdminSettingsOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="btn-close-modal" onClick={() => setIsAdminSettingsOpen(false)}>✕</button>
+            <h2>Panel de Administrador</h2>
+            <p className="hint" style={{marginBottom: '24px'}}>Opciones de cuenta y seguridad.</p>
+            
+            <div className="settings-section">
+              <h3>Seguridad</h3>
+              <button 
+                className="btn btn-ghost" 
+                style={{width: '100%', justifyContent: 'flex-start', padding: '12px', marginTop: '8px', border: '1px solid var(--line)'}}
+                onClick={() => alert("Función de cambiar contraseña en desarrollo")}
+              >
+                Cambiar mi contraseña
+              </button>
+            </div>
+
+            <div className="settings-section" style={{marginTop: '24px'}}>
+              <h3>Sesión</h3>
+              <button 
+                className="btn btn-ghost" 
+                style={{width: '100%', justifyContent: 'flex-start', padding: '12px', marginTop: '8px', border: '1px solid var(--line)', color: '#ff4d4d'}}
+                onClick={handleLogout}
+              >
+                <span style={{marginRight: '8px'}}>🚪</span> Cerrar Sesión
+              </button>
+            </div>
+            
+            <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '32px'}} onClick={() => setIsAdminSettingsOpen(false)}>
+              Cerrar
+            </button>
           </div>
         </div>
       )}

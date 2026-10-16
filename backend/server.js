@@ -2,7 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet'); // 1. Oculta cabeceras de vulnerabilidad
-const mongoSanitize = require('express-mongo-sanitize'); // 2. Bloquea inyecciones NoSQL
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
@@ -18,6 +17,27 @@ connectDB();
 
 const app = express();
 
+// Escudo personalizado contra Inyección NoSQL
+const sanitizeMongo = (req, res, next) => {
+  const limpiarObjeto = (obj) => {
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+      for (const key of Object.keys(obj)) {
+        if (key.startsWith('$') || key.includes('.')) {
+          delete obj[key]; // Elimina la inyección maliciosa
+        } else {
+          limpiarObjeto(obj[key]);
+        }
+      }
+    }
+  };
+
+  if (req.body) limpiarObjeto(req.body);
+  if (req.params) limpiarObjeto(req.params);
+  next();
+};
+
+
+
 // 2. Crear las reglas del limitador
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos de ventana de tiempo
@@ -29,8 +49,9 @@ const limiter = rateLimit({
 app.use(helmet()); // 4. ActivarHelmet para ocultar cabeceras de vulnerabilidad
 app.use(cors());
 app.use(express.json());
-app.use(mongoSanitize()); // 5. Activar mongoSanitize para prevenir inyecciones NoSQL
 app.use(limiter); // 3. Activar el limitador globalmente para todas las rutas
+// Activar el escudo
+app.use(sanitizeMongo);
 app.use('/api/medicos', medicoRoutes);
 
 // Rutas

@@ -35,6 +35,61 @@ const MedicoDashboard = () => {
     { id: 'r2', name: 'Glucosa en ayunas', who: 'Daniela Féliz' }
   ]);
 
+  // --- Estados para Modales del Médico ---
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  
+  // Datos temporales del perfil del médico
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('userName') || '',
+    email: localStorage.getItem('userEmail') || '',
+    phone: '',
+    especialidad: '', 
+    exequatur: '' // Número de licencia médica
+  });
+
+  const [settingsData, setSettingsData] = useState({
+    emailNotifications: true,
+    smsAlerts: true
+  });
+
+  // Funciones de acción
+  const handleRequestPasswordChange = async () => {
+    const email = localStorage.getItem('userEmail');
+    if (!email) return;
+    try {
+      await axios.post('http://localhost:5000/api/auth/olvide-password', { email });
+      alert('Enlace de seguridad enviado a tu correo corporativo.');
+      setIsSettingsModalOpen(false);
+    } catch (error) {
+      alert('Error al solicitar cambio de contraseña.');
+    }
+  };
+
+ const handleSaveProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        alert('Error: Sesión no encontrada.');
+        return;
+      }
+
+      await axios.put('http://localhost:5000/api/users/profile', {
+        userId,
+        name: profileData.name,
+        phone: profileData.phone,
+        especialidad: profileData.especialidad,
+        exequatur: profileData.exequatur
+      });
+
+      localStorage.setItem('userName', profileData.name);
+      alert('Perfil profesional actualizado correctamente.');
+      setIsProfileModalOpen(false);
+    } catch (error) {
+      alert('Error al guardar el perfil profesional.');
+    }
+  };
+
   // FUNCIONES LÓGICAS
   const handleLogout = () => {
     localStorage.clear();
@@ -89,12 +144,16 @@ const MedicoDashboard = () => {
                   </div>
                   <div className="dropdown-divider"></div>
                   <ul className="dropdown-menu-list">
-                    <li onClick={() => setAgendaActiva(!agendaActiva)}>
-                      <span className="menu-icon">📅</span> {agendaActiva ? 'Pausar mi agenda' : 'Reactivar agenda'}
-                    </li>
-                    <div className="dropdown-divider"></div>
-                    <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
-                  </ul>
+                <li onClick={() => { setIsProfileModalOpen(true); setIsDropdownOpen(false); }}>
+                  <span className="menu-icon">👨‍⚕️</span> Mi perfil profesional
+                </li>
+                <li onClick={() => { setIsSettingsModalOpen(true); setIsDropdownOpen(false); }}>
+                  <span className="menu-icon">⚙️</span> Configuración
+                </li>
+                <div className="dropdown-divider"></div>
+                <li><span className="menu-icon">📅</span> Pausar mi agenda</li>
+                <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
+              </ul>
                 </div>
               )}
             </div>
@@ -210,6 +269,91 @@ const MedicoDashboard = () => {
           </aside>
         </div>
       </div>
+     {/* --- MODAL DE PERFIL PROFESIONAL --- */}
+      {isProfileModalOpen && (
+        <div className="medico-modal-overlay" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="medico-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setIsProfileModalOpen(false)}>✕</button>
+            <div className="modal-header-flex">
+               <div className="dropdown-avatar modal-avatar-large">
+                 {profileData.name.substring(0, 2).toUpperCase()}
+               </div>
+               <div>
+                 <h2>Perfil Profesional</h2>
+                 <p className="hint">Actualiza tus credenciales y datos de contacto en la clínica.</p>
+               </div>
+            </div>
+
+            <form className="medico-form" style={{ marginTop: '24px' }}>
+              <div className="form-group">
+                <label>Nombre y Título</label>
+                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} placeholder="Ej. Dr. Francisco Gómez" />
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Correo Corporativo</label>
+                  <input type="email" value={profileData.email} disabled style={{opacity: 0.7, cursor: 'not-allowed'}} />
+                </div>
+                <div className="form-group">
+                  <label>Teléfono del Consultorio</label>
+                  <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} placeholder="Ej. Ext. 405" />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Especialidad Principal</label>
+                  <input type="text" value={profileData.especialidad} onChange={(e) => setProfileData({...profileData, especialidad: e.target.value})} placeholder="Ej. Cardiología" />
+                </div>
+                <div className="form-group">
+                  <label>Exequátur / Colegiatura</label>
+                  <input type="text" value={profileData.exequatur} onChange={(e) => setProfileData({...profileData, exequatur: e.target.value})} placeholder="Ej. 12345-MED" />
+                </div>
+              </div>
+              
+              <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '16px'}} onClick={handleSaveProfile}>
+                Guardar Credenciales
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE CONFIGURACIÓN DEL MÉDICO --- */}
+      {isSettingsModalOpen && (
+        <div className="medico-modal-overlay" onClick={() => setIsSettingsModalOpen(false)}>
+          <div className="medico-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setIsSettingsModalOpen(false)}>✕</button>
+            <h2>Configuración del Panel</h2>
+            <p className="hint" style={{marginBottom: '24px'}}>Gestiona tus notificaciones y seguridad.</p>
+
+            <div className="settings-section">
+              <h3>Alertas de Pacientes</h3>
+              <div className="setting-row">
+                <div>
+                  <strong>Notificar llegadas</strong>
+                  <span className="hint-block"> Aviso cuando un paciente pase a "En sala". </span>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={settingsData.emailNotifications} onChange={(e) => setSettingsData({...settingsData, emailNotifications: e.target.checked})} />
+                  <span className="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="settings-section" style={{marginTop: '24px'}}>
+              <h3>Seguridad</h3>
+              <button className="btn btn-ghost" style={{width: '100%', justifyContent: 'flex-start', padding: '12px', marginTop: '8px', border: '1px solid var(--line)'}} onClick={handleRequestPasswordChange}>
+                Cambiar mi contraseña
+              </button>
+            </div>
+            
+            <button type="button" className="btn btn-primary" style={{width: '100%', marginTop: '32px'}} onClick={() => setIsSettingsModalOpen(false)}>Hecho</button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

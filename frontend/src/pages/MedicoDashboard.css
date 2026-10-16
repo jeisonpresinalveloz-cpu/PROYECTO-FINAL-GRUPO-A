@@ -136,3 +136,72 @@
 .medico-plaza-app .logout-item:hover { background-color: var(--bad-soft); }
 
 @media (max-width: 980px) { .medico-plaza-app .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.medico-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.medico-modal-content {
+  background-color: var(--surface); /* El tono oscuro de tus tarjetas médicas */
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.medico-modal-content .close-modal {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.medico-modal-content .close-modal:hover {
+  color: var(--text-primary);
+}
+
+.medico-form .form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.medico-form .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.medico-form label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.medico-form input {
+  background-color: var(--surface-2); /* El color de fondo de tus inputs */
+  border: 1px solid var(--line);
+  color: var(--text-primary);
+  padding: 12px;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.medico-form input:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}

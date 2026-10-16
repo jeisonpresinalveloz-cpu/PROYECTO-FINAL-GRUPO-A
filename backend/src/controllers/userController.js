@@ -22,4 +22,31 @@ const getDoctors = async (req, res) => {
     }
 };
 
-module.exports = { getDoctors };
+const updateUserProfile = async (req, res) => {
+  try {
+    // Añadimos 'especialidad' y 'exequatur' a la desestructuración
+    const { userId, name, phone, bloodType, allergies, especialidad, exequatur } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name, phone, bloodType, allergies, especialidad, exequatur }, // Y los añadimos aquí
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    res.status(200).json({
+      mensaje: 'Perfil actualizado exitosamente.',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error al actualizar el perfil:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor al guardar el perfil.' });
+  }
+};
+
+
+
+module.exports = { getDoctors, updateUserProfile };
