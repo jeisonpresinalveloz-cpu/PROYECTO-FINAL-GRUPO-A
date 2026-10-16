@@ -4,6 +4,8 @@ import Register from './pages/Register';
 import PacienteDashboard from './pages/PacienteDashboard';
 import MedicoDashboard from './pages/MedicoDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ResetPassword from './pages/ResetPassword';
+
 
 function App() {
   return (
@@ -14,6 +16,7 @@ function App() {
         <Route path="/paciente/buscar" element={<PacienteDashboard />} />
         <Route path="/medico/agenda" element={<MedicoDashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );

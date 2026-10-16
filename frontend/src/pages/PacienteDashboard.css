@@ -1,375 +1,154 @@
-.dashboard-container {
-  padding: 40px 20px;
-  background-color: #f4f6f8;
+/* ==========================================
+// PACIENTE HORIZONTE (DISEÑO EXACTO HTML)
+// ========================================== */
+
+.mi-salud-app {
+  --bg: #0C1513;
+  --surface: #132220;
+  --surface-2: #182B28;
+  --ink: #E6F0EC;
+  --muted: #8FA59C;
+  --line: #243934;
+  --accent: #3CCDB3;
+  --accent-ink: #04201A;
+  --accent-soft: #143D35;
+  --warn: #F0A847;
+  --warn-soft: #3A2A13;
+  --done: #A3B6FF;
+  --done-soft: #1F2A4F;
+  --bad: #FF8C82;
+  --bad-soft: #3E1D1B;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -26px rgba(0,0,0,.9);
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 20px 40px;
+  padding-inline: clamp(16px, 4vw, 40px);
+  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.dashboard-header {
-  text-align: center;
-  margin-bottom: 40px;
-  color: #2c3e50;
+.mi-salud-app * { box-sizing: border-box; }
+.mi-salud-app button, .mi-salud-app input, .mi-salud-app select { font: inherit; color: inherit; }
+.mi-salud-app h1, .mi-salud-app h2, .mi-salud-app h3, .mi-salud-app p { margin: 0; }
+.mi-salud-app .wrap { max-width: 1200px; margin-inline: auto; display: grid; gap: 20px; }
+
+/* Cabecera */
+.mi-salud-app .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mi-salud-app .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mi-salud-app .brand { display: flex; align-items: center; gap: 12px; }
+.mi-salud-app .brand-mark { width: 42px; height: 42px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.mi-salud-app .brand strong { display: block; font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }
+.mi-salud-app .brand small { color: var(--muted); font-size: 13px; }
+.mi-salud-app .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; }
+
+/* Botones */
+.mi-salud-app .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; white-space: nowrap; transition: border-color .2s, background-color .2s; }
+.mi-salud-app .btn:hover { border-color: var(--muted); }
+.mi-salud-app .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.mi-salud-app .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.mi-salud-app .btn-ghost:hover { color: var(--ink); border-color: transparent; }
+.mi-salud-app .btn-danger { color: var(--bad); }
+
+.mi-salud-app .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.mi-salud-app .greet h1 { margin-top: 8px; font-family: var(--display); font-weight: 700; font-size: clamp(36px, 6vw, 58px); line-height: 1; letter-spacing: -.03em; }
+.mi-salud-app .lede { margin-top: 8px; font-size: 16px; color: var(--muted); }
+
+/* Layout Grid */
+.mi-salud-app .grid-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.mi-salud-app .grid-bottom { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.mi-salud-app .side { display: grid; gap: 20px; }
+
+.mi-salud-app .panel { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); animation: rise .5s ease both; }
+.mi-salud-app .panel h2 { font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.mi-salud-app .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.mi-salud-app .hint { font-size: 12px; color: var(--muted); }
+
+/* Hero */
+.mi-salud-app .hero { position: relative; isolation: isolate; overflow: hidden; display: grid; gap: 18px; align-content: start; padding: clamp(22px, 4vw, 34px); border-radius: 28px; background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent-ink) 14%, transparent) 0 26%, transparent 26.5%), var(--accent); color: var(--accent-ink); animation: rise .6s ease both; }
+.mi-salud-app .hero .eyebrow { color: var(--accent-ink); opacity: .85; }
+.mi-salud-app .next { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.mi-salud-app .cal { width: 84px; height: 92px; flex: none; border-radius: 20px; display: grid; place-content: center; text-align: center; background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+.mi-salud-app .cal span { font-family: var(--display); font-size: 38px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.mi-salud-app .cal small { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+.mi-salud-app .hero .cal { background: color-mix(in srgb, var(--accent-ink) 16%, transparent); color: var(--accent-ink); box-shadow: none; }
+.mi-salud-app .next-doc { font-family: var(--display); font-size: clamp(24px, 3.4vw, 34px); font-weight: 700; line-height: 1.1; letter-spacing: -.02em; margin-bottom:4px; }
+.mi-salud-app .next-meta { font-size: 15px; opacity: .92; }
+
+/* Accesos Rápidos */
+.mi-salud-app .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mi-salud-app .tile { display: grid; gap: 4px; align-content: start; text-align: left; padding: 16px; border-radius: 20px; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; transition: border-color .2s; }
+.mi-salud-app .tile:hover { border-color: var(--accent); }
+.mi-salud-app .tile-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 6px; }
+.mi-salud-app .tile strong { font-size: 15px; }
+.mi-salud-app .tile small { font-size: 12px; color: var(--muted); }
+
+/* Tabs */
+.mi-salud-app .seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
+.mi-salud-app .seg button { font-size: 13px; font-weight: 600; padding: 7px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.mi-salud-app .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+/* Lista de Citas */
+.mi-salud-app .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.mi-salud-app .row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-2); }
+.mi-salud-app .row .cal { width: 64px; height: 72px; border-radius: 16px; box-shadow: none; background: var(--accent-soft); }
+.mi-salud-app .row .cal span { font-size: 26px; }
+.mi-salud-app .row-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.mi-salud-app .row-top strong { font-size: 16px; font-weight: 600; }
+.mi-salud-app .meta { font-size: 13px; color: var(--muted); }
+.mi-salud-app .row-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.mi-salud-app .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mi-salud-app .confirm-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); }
+
+/* Colores por estado */
+.mi-salud-app .pill { padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; background: var(--accent-soft); color: var(--accent); }
+.mi-salud-app .row[data-status="pendiente"] .pill { background: var(--warn-soft); color: var(--warn); }
+.mi-salud-app .row[data-status="confirmada"] .pill { background: var(--accent-soft); color: var(--accent); }
+.mi-salud-app .row[data-status="atendida"] .pill { background: var(--done-soft); color: var(--done); }
+.mi-salud-app .row[data-status="atendida"] .cal { background: var(--done-soft); color: var(--done); }
+.mi-salud-app .row[data-status="cancelada"] .pill { background: var(--bad-soft); color: var(--bad); }
+
+.mi-salud-app .empty { padding: 22px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); font-size: 14px; }
+
+/* Médico Cabecera */
+.mi-salud-app .doc-card { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.mi-salud-app .doc-av { width: 52px; height: 52px; border-radius: 18px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-family: var(--display); font-weight: 700; flex: none; }
+.mi-salud-app .doc-card strong { display: block; font-size: 15px; }
+.mi-salud-app .doc-card small { font-size: 13px; color: var(--muted); }
+
+/* --- MODAL ESTILOS --- */
+.mi-salud-app .modal-overlay { position: fixed; inset: 0; background: rgba(12, 21, 19, 0.85); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.mi-salud-app .modal-content { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 32px; width: 100%; max-width: 500px; position: relative; box-shadow: var(--shadow); }
+.mi-salud-app .close-modal { position: absolute; top: 20px; right: 20px; background: transparent; color: var(--muted); border: none; font-size: 18px; cursor: pointer; }
+.mi-salud-app .agendar-form { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+.mi-salud-app .form-row { display: flex; gap: 16px; }
+.mi-salud-app .form-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.mi-salud-app .form-group label { color: var(--muted); font-size: 13px; font-weight: 600; }
+.mi-salud-app .form-group input, .mi-salud-app .form-group select { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); padding: 12px; border-radius: 8px; }
+.mi-salud-app .modal-alert { padding: 12px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 600; }
+.mi-salud-app .modal-alert.success { background: var(--accent-soft); color: var(--accent); }
+.mi-salud-app .modal-alert.error { background: var(--bad-soft); color: var(--bad); }
+
+@media (max-width: 980px) {
+  .mi-salud-app .grid-top, .mi-salud-app .grid-bottom { grid-template-columns: minmax(0, 1fr); }
 }
 
-.filter-section {
-  max-width: 600px;
-  margin: 0 auto 40px auto;
-  display: flex;
-  gap: 10px;
-}
-
-.filter-input {
-  flex: 1;
-  padding: 14px 20px;
-  border: 1px solid #cfd8dc;
-  border-radius: 30px;
-  font-size: 16px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  outline: none;
-  transition: border-color 0.3s ease;
-}
-
-.filter-input:focus {
-  border-color: #00acc1;
-}
-
-.medicos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 25px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.medico-card {
-  background: white;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  border-top: 5px solid #00acc1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.medico-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-.medico-name {
-  font-size: 20px;
-  color: #2c3e50;
-  margin: 0 0 10px 0;
-}
-
-.medico-specialty {
-  display: inline-block;
-  background: #e0f7fa;
-  color: #00838f;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-}
-
-.horarios-container {
-  background-color: #f9fbfc;
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid #eceff1;
-}
-
-.horarios-title {
-  font-size: 12px;
-  color: #7f8c8d;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.horario-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px dashed #cfd8dc;
-  font-size: 14px;
-  color: #34495e;
-}
-
-.horario-item:last-child {
-  border-bottom: none;
-}
-
-.no-results {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #7f8c8d;
-  font-size: 18px;
-  padding: 40px;
-  background: white;
-  border-radius: 12px;
-}
-
-.loading-message {
-  text-align: center;
-  margin-top: 50px;
-  font-size: 18px;
-  color: #7f8c8d;
-}
-
-/* Botón de Cerrar Sesión */
-.logout-button {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  position: absolute;
-  right: 20px; /* Lo separa un poco del borde derecho exacto */
-  top: 20px; /* Alineado con el padding-top del contenedor */
-  transition: background-color 0.3s ease;
-}
-
-.logout-button:hover {
-  background-color: #c0392b;
-}
-
-/* Ajuste para que el botón conviva bien con el título */
-.header-top {
-  display: flex;
-  justify-content: center; /* Obliga al contenido a ir al centro */
-  align-items: center;
-  position: relative; 
-  margin-bottom: 40px; /* Un poco más de espacio debajo */
-  width: 100%;
-  padding-top: 20px; /* Da un respiro arriba */
-}
-
-.header-text-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Centra los elementos hijos (h1 y p) */
-  text-align: center;
-  width: 100%; /* Asegura que tome todo el espacio central para poder centrarse bien */
-}
-
-.header-text-container h1 {
-  margin-bottom: 5px; /* Acerca un poco el párrafo al título */
-}
-
-.header-text-container p {
-  color: #7f8c8d; /* Le da un tono gris elegante al subtítulo */
-  margin-top: 0;
-}
-
-.btn-agendar {
-  width: 100%;
-  padding: 10px;
-  background-color: #00acc1;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 15px;
-  transition: background-color 0.3s;
-}
-
-.btn-agendar:hover {
-  background-color: #00838f;
-}
-
-/* Fondo oscuro desenfocado del modal */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-/* Caja principal del modal */
-.modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
-  margin-bottom: 20px;
-}
-
-.modal-header h2 { margin: 0; color: #2c3e50; font-size: 22px; }
-
-.btn-close {
-  background: none; border: none; font-size: 24px;
-  cursor: pointer; color: #95a5a6;
-}
-
-.form-group label {
-  display: block; font-weight: bold; margin-bottom: 8px; color: #34495e;
-}
-
-.form-select, .form-input {
-  width: 100%; padding: 12px; border: 1px solid #cfd8dc;
-  border-radius: 6px; margin-bottom: 20px; font-size: 14px;
-}
-
-/* Grilla interactiva de horas */
-.horas-grid {
-  display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
-}
-
-.hora-pill {
-  padding: 10px 15px; background-color: #f0f3f4;
-  border: 1px solid #bdc3c7; border-radius: 20px;
-  cursor: pointer; transition: all 0.2s; font-weight: 500;
-}
-
-.hora-pill:hover { border-color: #00acc1; color: #00acc1; }
-
-.hora-pill.selected {
-  background-color: #00acc1; color: white; border-color: #00acc1;
-  box-shadow: 0 4px 10px rgba(0, 172, 193, 0.4);
-}
-
-.btn-confirmar {
-  width: 100%; padding: 14px; background-color: #27ae60;
-  color: white; border: none; border-radius: 8px;
-  font-size: 16px; font-weight: bold; cursor: pointer;
-}
-
-.btn-confirmar:disabled { background-color: #95a5a6; cursor: not-allowed; }
-
-/* Mensaje cuando el médico aún no tiene días asignados */
-.horarios-no-configurados {
-  color: #95a5a6;
-  font-style: italic;
-  font-size: 14px;
-}
-
-/* Caja de notificaciones del Modal (Base) */
-.alert-mensaje {
-  padding: 10px;
-  margin-bottom: 15px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-/* Modificadores de color para la notificación */
-.alert-success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.alert-error {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-/* Mensaje cuando todas las horas de un día ya están ocupadas */
-.no-disponibilidad-text {
-  color: #e74c3c;
-  font-size: 14px;
-}
-
-.mis-citas-section {
-  max-width: 1200px;
-  margin: 0 auto 40px auto;
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.mis-citas-title {
-  font-size: 20px;
-  color: #2c3e50;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #ecf0f1;
-  padding-bottom: 10px;
-}
-
-.citas-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
-}
-
-.cita-paciente-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #f9fbfc;
-}
-
-.btn-cancelar {
-  margin-top: 15px;
-  width: 100%;
-  padding: 8px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.3s;
-}
-
-.btn-cancelar:hover {
-  background-color: #c0392b;
-}
-
-.btn-cancelar:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-
-/* Estructura interna de la tarjeta de cita del paciente */
-.cita-paciente-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.cita-paciente-info {
-  font-size: 14px;
-  color: #34495e;
-}
-
-.cita-paciente-especialidad {
-  color: #7f8c8d;
-}
-
-/* Modificador para la etiqueta de estado dentro de la tarjeta */
-.alert-mensaje.badge-pequeno {
-  padding: 2px 8px;
-  font-size: 12px;
-  margin-bottom: 0;
-  display: inline-block;
-}
-
-/* Texto de "No tienes citas agendadas" */
-.sin-citas-text {
-  color: #7f8c8d;
-}
+/* Menú Desplegable */
+.mi-salud-app .profile-dropdown { position: absolute; top: 50px; right: 0; width: 250px; background-color: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); z-index: 1000; overflow: hidden; animation: slideDown 0.2s ease-out forwards; color: var(--ink); }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.mi-salud-app .dropdown-header { display: flex; align-items: center; gap: 12px; padding: 16px; }
+.mi-salud-app .dropdown-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent-soft); color: var(--accent); display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; }
+.mi-salud-app .dropdown-user-info { display: flex; flex-direction: column; }
+.mi-salud-app .dropdown-user-info strong { font-size: 14px; margin-bottom: 2px; }
+.mi-salud-app .dropdown-user-info span { color: var(--muted); font-size: 12px; }
+.mi-salud-app .dropdown-divider { height: 1px; background-color: var(--line); margin: 4px 0; }
+.mi-salud-app .dropdown-menu-list { list-style: none; padding: 8px 0; margin: 0; }
+.mi-salud-app .dropdown-menu-list li { padding: 12px 16px; display: flex; align-items: center; gap: 12px; font-size: 14px; cursor: pointer; transition: background-color 0.2s; }
+.mi-salud-app .dropdown-menu-list li:hover { background-color: var(--surface-2); }
+.mi-salud-app .logout-item { color: var(--bad); }
+.mi-salud-app .logout-item:hover { background-color: var(--bad-soft); }

@@ -1,0 +1,248 @@
+/* ==========================================
+// ESTRUCTURA PRINCIPAL DEL DASHBOARD
+// ========================================== */
+
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* --- TOPBAR --- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-titles h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.topbar-titles p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Botones de la Topbar */
+.btn-theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-theme-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.user-profile-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-logout-text {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-logout-text:hover {
+  color: var(--text-primary);
+}
+
+/* Avatar Circular */
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--bg-card-highlight);
+  color: var(--accent-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid rgba(52, 199, 165, 0.2); /* Borde sutil acentuado */
+  transition: transform 0.2s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* --- ÁREA PRINCIPAL --- */
+.main-content {
+  padding: 40px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-date {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+}
+
+.page-title {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 8px 0 0 0;
+}
+
+.page-content-wrapper {
+  /* Aquí dentro se renderizará el grid específico de cada página */
+}
+
+/* ==========================================
+// MENÚ DESPLEGABLE DEL PERFIL
+// ========================================== */
+
+.profile-dropdown {
+  position: absolute;
+  top: 60px; /* Ajusta según la altura de tu topbar */
+  right: 32px;
+  width: 280px;
+  background-color: var(--bg-card); /* Color oscuro de las tarjetas */
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Sombra fuerte para resaltar sobre el fondo oscuro */
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--bg-card-highlight);
+  color: var(--accent-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-user-info strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.dropdown-user-info span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+}
+
+.dropdown-menu-list {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+}
+
+.dropdown-menu-list li {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu-list li:hover {
+  background-color: rgba(255, 255, 255, 0.05); /* Hover sutil */
+}
+
+.menu-icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.logout-item {
+  color: var(--status-cancelled) !important; /* Rojo sutil para cerrar sesión */
+}
+
+.logout-item:hover {
+  background-color: rgba(235, 87, 87, 0.1) !important;
+}
+
+/* Ocultamos el botón original de cerrar sesión en la topbar ya que ahora está en el menú */
+.user-profile-section > .btn-logout-text {
+    display: none;
+}

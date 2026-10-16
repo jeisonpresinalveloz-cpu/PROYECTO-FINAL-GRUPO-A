@@ -1,0 +1,35 @@
+:root {
+  /* Fondo principal (muy oscuro, casi negro) */
+  --bg-main: #0B1114;
+  /* Fondo de tarjetas (ligeramente más claro) */
+  --bg-card: #151C21;
+  /* Fondo de tarjetas destacadas (aún más claro) */
+  --bg-card-highlight: #1C242A;
+  
+  /* Color principal de acento (Verde agua/teal) */
+  --accent-primary: #34C7A5;
+  /* Variante más oscura del acento para hovers */
+  --accent-primary-hover: #2BAA8C;
+
+  /* Texto principal (Blanco puro o casi blanco) */
+  --text-primary: #FFFFFF;
+  /* Texto secundario (Gris oscuro) */
+  --text-secondary: #9BA4A8;
+
+  /* Colores de estado */
+  --status-pending: #F2994A; /* Naranja */
+  --status-confirmed: #27AE60; /* Verde */
+  --status-cancelled: #EB5757; /* Rojo */
+
+  /* Bordes sutiles */
+  --border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Aplicamos el fondo oscuro a toda la página por defecto */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}

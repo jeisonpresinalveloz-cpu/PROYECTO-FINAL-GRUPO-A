@@ -1,87 +1,108 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Login.css';
+import { useNavigate, Link } from 'react-router-dom';
+import './Login.css'; // Mantiene la estructura general (fondo, tarjeta)
+import './Register.css'; // Nuevos estilos específicos separados
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const hasLength = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const isStrong = hasLength && hasUpper && hasNumber;
+
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setError('');
     
+    if (!isStrong) {
+      setMensaje({ texto: 'Por favor, cumple con los requisitos de la contraseña.', tipo: 'error' });
+      return;
+    }
+
     try {
-      // Petición al backend para registrar al paciente
       await axios.post('http://localhost:5000/api/auth/register', {
         name,
         email,
         password,
-        role: 'paciente' // Forzamos el rol por defecto
+        role: 'paciente'
       });
-      
-      alert('¡Cuenta creada con éxito! Ahora puedes iniciar sesión.');
-      navigate('/'); // Lo enviamos al login
-      
+      setMensaje({ texto: 'Cuenta creada exitosamente. Redirigiendo...', tipo: 'success' });
+      setTimeout(() => navigate('/'), 2000);
     } catch (error) {
-      setError('Error al crear la cuenta. Verifica los datos.');
+      setMensaje({ texto: error.response?.data?.mensaje || 'Error al registrar la cuenta.', tipo: 'error' });
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-icon"></div>
-          <h2 className="login-title">Registro de Pacientes</h2>
-          <p className="login-subtitle">Crea tu cuenta en La Plaza De La Salud</p>
+    <div className="login-page-container">
+      <video autoPlay loop muted playsInline className="video-background">
+        <source src="/hospital-bg.mp4" type="video/mp4" />
+      </video>
+      <div className="video-overlay"></div>
+
+      <div className="login-card-dark register-card-override">
+        <div className="login-header-dark">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="var(--accent-primary)" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          <h2>Crear Cuenta</h2>
+          <p>Únete a Plaza De La Salud</p>
         </div>
-        
-        {error && <div className="error-message">{error}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
+
+        {mensaje.texto && (
+          <div className={`alerta-dark ${mensaje.tipo}`}>
+            {mensaje.texto}
+          </div>
+        )}
+
+        <form onSubmit={handleRegister} className="form-dark">
+          <div className="input-group-dark">
             <label>Nombre Completo</label>
-            <input 
-              type="text" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="Ej. María Pérez"
-              required 
-            />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. María Pérez" required />
           </div>
-          <div className="form-group">
+
+          <div className="input-group-dark">
             <label>Correo Electrónico</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              placeholder="maria@correo.com"
-              required 
-            />
-          </div>
-          <div className="form-group">
-            <label>Contraseña</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              placeholder="••••••••"
-              required 
-            />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ejemplo@correo.com" required />
           </div>
           
-          <button type="submit" className="login-button">Crear Cuenta</button>
+          <div className="input-group-dark">
+            <label>Contraseña Segura</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Escribe tu contraseña" required />
+            
+            <div className="password-meter">
+              <span className={`meter-req ${hasLength ? 'valid' : 'invalid'}`}>
+                {hasLength ? '✓' : '○'} Mínimo 8 caracteres
+              </span>
+              <span className={`meter-req ${hasUpper ? 'valid' : 'invalid'}`}>
+                {hasUpper ? '✓' : '○'} Al menos una letra mayúscula
+              </span>
+              <span className={`meter-req ${hasNumber ? 'valid' : 'invalid'}`}>
+                {hasNumber ? '✓' : '○'} Al menos un número
+              </span>
+            </div>
+          </div>
+          
+          <button 
+            type="submit" 
+            className="btn-submit-dark btn-register-submit" 
+            disabled={!isStrong}
+          >
+            Registrarme
+          </button>
         </form>
-        
-        <div className="footer-text">
-        ¿Ya tienes cuenta? <Link to="/" className="footer-link">Inicia sesión aquí</Link>
+
+        <div className="login-footer-dark register-footer-override">
+          <p>¿Ya tienes cuenta? <Link to="/">Inicia sesión aquí</Link></p>
         </div>
       </div>
     </div>
   );
 };
+
 export default Register;

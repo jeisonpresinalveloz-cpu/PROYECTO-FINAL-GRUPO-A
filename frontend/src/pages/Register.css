@@ -1,0 +1,62 @@
+/* ==========================================
+// ESTILOS ESPECÍFICOS DE LA PANTALLA DE REGISTRO
+// ========================================== */
+
+/* Ajustes de espaciado para la tarjeta de registro */
+.register-card-override {
+  padding-bottom: 20px;
+}
+
+.register-footer-override {
+  margin-top: 20px;
+}
+
+/* Alertas dinámicas */
+.alerta-dark.success {
+  background-color: rgba(52, 199, 165, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid rgba(52, 199, 165, 0.2);
+}
+
+.alerta-dark.error {
+  background-color: rgba(250, 137, 107, 0.1);
+  color: #FA896B;
+  border: 1px solid rgba(250, 137, 107, 0.2);
+}
+
+/* Medidor visual de fuerza de contraseña */
+.password-meter {
+  margin-top: 12px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meter-req {
+  transition: color 0.3s ease;
+}
+
+.meter-req.valid {
+  color: var(--accent-primary);
+}
+
+.meter-req.invalid {
+  color: var(--text-secondary);
+}
+
+/* Botón de registro y su estado deshabilitado */
+.btn-register-submit {
+  margin-top: 16px;
+  transition: opacity 0.3s ease, cursor 0.3s ease;
+}
+
+.btn-register-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Evitar hover effects cuando está deshabilitado */
+.btn-register-submit:disabled:hover {
+  background-color: var(--accent-primary); /* Mantiene el color base sin brillar */
+}

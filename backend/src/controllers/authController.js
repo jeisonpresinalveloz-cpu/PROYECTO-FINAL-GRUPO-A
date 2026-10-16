@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // Importación necesaria para el Token
+const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const { sendResetEmail } = require('../utils/mailer');
 
 const registerUser = async (req, res) => {
   try {
@@ -80,28 +82,124 @@ const loginUser = async (req, res) => {
     }
 };
 
- const resetPassword = async (req, res) => {
+// 1. Nueva función: Solicitar el enlace de recuperación
+const solicitarRecuperacion = async (req, res) => {
   try {
-    const { email, nuevaPassword } = req.body;
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
-    // 1. Buscar al usuario por correo
-    const usuario = await User.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ mensaje: 'No existe una cuenta con este correo.' });
+    if (!user) {
+      // Por seguridad, no decimos si el correo existe o no, damos un mensaje genérico
+      return res.status(200).json({ mensaje: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
     }
 
-    // 2. Encriptar la nueva contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
+    // Generamos un token temporal válido por 15 minutos
+    const resetToken = jwt.sign(
+      { id: user._id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '15m' }
+    );
 
-    await User.updateOne({ email }, { password: hashedPassword });
+    // Creamos la URL que apuntará a una nueva pantalla en tu Frontend de React
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
 
-    res.status(200).json({ mensaje: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión.' });
+    // Enviamos el correo
+    await sendResetEmail(user.email, resetUrl);
+
+    res.status(200).json({ mensaje: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
   } catch (error) {
-    console.error('Error al restablecer contraseña:', error);
+    console.error('Error al solicitar recuperación:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor.' });
   }
 };
 
-// Exportar ambas funciones
-module.exports = { registerUser, loginUser, resetPassword };
+// 2. Función actualizada: Cambiar la contraseña validando el token
+const resetPassword = async (req, res) => {
+  try {
+    // Ahora recibimos el token de la URL y la nueva contraseña
+    const { token, nuevaPassword } = req.body;
+
+    // Verificamos si el token es válido o si ya expiró
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    // Encriptamos la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
+
+    // Actualizamos en la base de datos
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ mensaje: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión.' });
+  } catch (error) {
+    console.error('Error al restablecer contraseña:', error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ mensaje: 'El enlace de recuperación ha expirado. Solicita uno nuevo.' });
+    }
+    res.status(500).json({ mensaje: 'Token inválido o error en el servidor.' });
+  }
+};
+
+// Función para inicio de sesión / registro automático con Google
+const googleLogin = async (req, res) => {
+  const { access_token } = req.body;
+  
+  try {
+    // 1. Pedimos los datos del usuario usando AXIOS (más seguro que fetch en Node antiguo)
+    const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+    
+    // Con axios, la data ya viene parseada en googleResponse.data
+    const googleData = googleResponse.data;
+    
+    if (!googleData.email) {
+      return res.status(400).json({ mensaje: 'Token de Google inválido' });
+    }
+
+    const { email, name, picture } = googleData;
+
+    // ... (EL RESTO DEL CÓDIGO SIGUE IGUAL: User.findOne, etc.)
+
+    // 2. Buscamos si el usuario ya existe en nuestra base de datos MongoDB
+    let user = await User.findOne({ email });
+
+    // 3. Si no existe, lo registramos automáticamente como paciente
+    if (!user) {
+      user = new User({
+        name: name,
+        email: email,
+        password: 'google-oauth-no-password', // Contraseña dummy de seguridad
+        role: 'paciente' 
+      });
+      await user.save();
+    }
+
+    // 4. Generamos nuestro token JWT normal para el sistema
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'secreto_super_seguro',
+      { expiresIn: '1d' }
+    );
+
+    // 5. Enviamos la respuesta al frontend
+    res.status(200).json({
+      token,
+      _id: user._id,
+      name: user.name,
+      role: user.role,
+      email: user.email,
+      avatar: picture // ¡Bonus! Capturamos la foto de perfil de Google
+    });
+
+  } catch (error) {
+    console.error('Error en Google Login:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor durante Google Login.' });
+  }
+};
+module.exports = { registerUser, loginUser, solicitarRecuperacion, resetPassword, googleLogin };

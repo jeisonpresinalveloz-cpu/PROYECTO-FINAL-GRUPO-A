@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const helmet = require('helmet'); // 1. Oculta cabeceras de vulnerabilidad
+const mongoSanitize = require('express-mongo-sanitize'); // 2. Bloquea inyecciones NoSQL
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
@@ -24,8 +26,10 @@ const limiter = rateLimit({
 });
 
 // Middlewares
+app.use(helmet()); // 4. ActivarHelmet para ocultar cabeceras de vulnerabilidad
 app.use(cors());
 app.use(express.json());
+app.use(mongoSanitize()); // 5. Activar mongoSanitize para prevenir inyecciones NoSQL
 app.use(limiter); // 3. Activar el limitador globalmente para todas las rutas
 app.use('/api/medicos', medicoRoutes);
 
