@@ -3,7 +3,6 @@ import axios from 'axios';
 import './MedicoDashboard.css';
 
 const MedicoDashboard = () => {
-  // Lógica del menú desplegable
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   
@@ -18,45 +17,30 @@ const MedicoDashboard = () => {
   const userName = localStorage.getItem('userName') || 'Doctor';
   const getInitials = (name) => name.slice(0, 2).toUpperCase();
   const apellido = userName.split(' ').length > 1 ? userName.split(' ')[1] : userName;
+  const doctorId = localStorage.getItem('userId');
 
-  // ESTADO DE LA AGENDA
+  // --- ESTADOS DE LA AGENDA Y CITAS ---
   const [agendaActiva, setAgendaActiva] = useState(true);
-
-  // --- CITAS REALES DEL MÉDICO ---
   const [citas, setCitas] = useState([]);
+  
+  // NUEVO: Estados para declinar cita
+  const [declineId, setDeclineId] = useState(null);
+  const [razonDeclinacion, setRazonDeclinacion] = useState('');
+  
+  // --- RESULTADOS PENDIENTES DESDE MONGODB ---
+  const [resultados, setResultados] = useState([]);
 
-  useEffect(() => {
-    const fetchMisCitas = async () => {
-      const doctorId = localStorage.getItem('userId');
-      if (!doctorId) return;
-
-      try {
-        const res = await axios.get(`http://localhost:5000/api/citas/medico/${doctorId}`);
-        setCitas(res.data);
-      } catch (error) {
-        console.error("Error al cargar las citas del médico:", error);
-      }
-    };
-
-    fetchMisCitas();
-  }, []);
-
-  const [resultados, setResultados] = useState([
-    { id: 'r1', name: 'Perfil lipídico', who: 'Ana Gómez' },
-    { id: 'r2', name: 'Glucosa en ayunas', who: 'Daniela Féliz' }
-  ]);
-
-  // --- Estados para Modales del Médico ---
+  // --- ESTADOS DE MODALES ---
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  
-  // Datos temporales del perfil del médico
+  const [isExpedienteModalOpen, setIsExpedienteModalOpen] = useState(false);
+
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('userName') || '',
     email: localStorage.getItem('userEmail') || '',
     phone: '',
     especialidad: '', 
-    exequatur: '' // Número de licencia médica
+    exequatur: '' 
   });
 
   const [settingsData, setSettingsData] = useState({
@@ -64,9 +48,9 @@ const MedicoDashboard = () => {
     smsAlerts: true
   });
 
-  // --- ESTADOS PARA EL MÓDULO DE CONSULTA ACTIVA ---
   const [isConsultaModalOpen, setIsConsultaModalOpen] = useState(false);
   const [pacienteActivo, setPacienteActivo] = useState(null); 
+  const [historialPaciente, setHistorialPaciente] = useState([]); 
   
   const [consultaData, setConsultaData] = useState({
     motivo: '',
@@ -80,13 +64,41 @@ const MedicoDashboard = () => {
     dosis: '',
     frecuencia: ''
   });
-  
-  // Funciones de acción
+
+  // --- OBTENER DATOS DEL MÉDICO AL CARGAR ---
+  useEffect(() => {
+    const fetchMisDatos = async () => {
+      if (!doctorId) return;
+
+      try {
+        const resPerfil = await axios.get(`${import.meta.env.VITE_API_URL}/users/${doctorId}`);
+        if (resPerfil.data) {
+          if (resPerfil.data.agendaActiva !== undefined) {
+             setAgendaActiva(resPerfil.data.agendaActiva);
+          }
+        }
+
+        const resCitas = await axios.get(`${import.meta.env.VITE_API_URL}/citas/medico/${doctorId}`);
+        setCitas(resCitas.data);
+
+        const resResultados = await axios.get(`${import.meta.env.VITE_API_URL}/resultados/medico/${doctorId}`);
+        const resultadosPendientes = resResultados.data.filter(r => r.estado === 'Pendiente');
+        setResultados(resultadosPendientes);
+        
+      } catch (error) {
+        console.error("Error al cargar los datos iniciales:", error);
+      }
+    };
+
+    fetchMisDatos();
+  }, [doctorId]);
+
+  // --- ACCIONES GENERALES ---
   const handleRequestPasswordChange = async () => {
     const email = localStorage.getItem('userEmail');
     if (!email) return;
     try {
-      await axios.post('http://localhost:5000/api/auth/olvide-password', { email });
+      await axios.post(`${import.meta.env.VITE_API_URL}/auth/olvide-password`, { email });
       alert('Enlace de seguridad enviado a tu correo corporativo.');
       setIsSettingsModalOpen(false);
     } catch (error) {
@@ -96,14 +108,12 @@ const MedicoDashboard = () => {
 
   const handleSaveProfile = async () => {
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
+      if (!doctorId) {
         alert('Error: Sesión no encontrada.');
         return;
       }
-
-      await axios.put('http://localhost:5000/api/users/profile', {
-        userId,
+      await axios.put(`${import.meta.env.VITE_API_URL}/users/profile`, {
+        userId: doctorId,
         name: profileData.name,
         phone: profileData.phone,
         especialidad: profileData.especialidad,
@@ -123,33 +133,96 @@ const MedicoDashboard = () => {
     window.location.href = '/';
   };
 
-  // --- ACTUALIZAR EL ESTADO DE LA CITA EN EL BACKEND ---
-  const cambiarEstadoCita = async (idCitaMongo, nuevoEstado) => {
+  // --- 1. PAUSAR / REANUDAR AGENDA ---
+  const handleToggleAgenda = async () => {
     try {
-      // 1. Actualiza en el backend (asegúrate de tener esta ruta PUT en tu backend)
-      await axios.put(`http://localhost:5000/api/citas/${idCitaMongo}`, { estado: nuevoEstado });
+      const nuevoEstado = !agendaActiva;
+      setAgendaActiva(nuevoEstado);
+      setIsDropdownOpen(false);
       
-      // 2. Actualiza la pantalla
-      setCitas(citas.map(c => c._id === idCitaMongo ? { ...c, estado: nuevoEstado } : c));
+      await axios.put(`${import.meta.env.VITE_API_URL}/users/profile`, {
+        userId: doctorId,
+        agendaActiva: nuevoEstado
+      });
+      
+      alert(nuevoEstado ? 'Agenda reanudada. Ya puedes recibir pacientes.' : 'Agenda pausada. No recibirás nuevas solicitudes de citas.');
     } catch (error) {
-      console.error('Error al actualizar estado en BD. Actualizando localmente por ahora.', error);
-      // Fallback visual por si aún no tienes la ruta PUT en el backend
-      setCitas(citas.map(c => c._id === idCitaMongo ? { ...c, estado: nuevoEstado } : c));
+      alert('Error al cambiar el estado de la agenda.');
+      setAgendaActiva(!agendaActiva); 
     }
   };
 
-  const marcarResultadoRevisado = (id) => {
-    setResultados(resultados.filter(r => r.id !== id));
+  // --- 2. MARCAR RESULTADO COMO REVISADO ---
+  const marcarResultadoRevisado = async (idResultadoMongo) => {
+    try {
+      setResultados(resultados.filter(r => r._id !== idResultadoMongo));
+      
+      await axios.put(`${import.meta.env.VITE_API_URL}/resultados/${idResultadoMongo}/estado`, { 
+        estado: 'Listo' 
+      });
+      
+    } catch (error) {
+      console.error('Error al actualizar el resultado:', error);
+      alert('Hubo un error al marcar el resultado como revisado. Se revertirá el cambio.');
+    }
   };
 
-  // --- LÓGICA DEL MÓDULO DE CONSULTA ---
+  const cambiarEstadoCita = async (idCitaMongo, nuevoEstado, datosExtra = {}) => {
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/citas/${idCitaMongo}/estado`, { 
+        estado: nuevoEstado,
+        ...datosExtra 
+      });
+      
+      setCitas(citas.map(c => c._id === idCitaMongo ? { ...c, estado: nuevoEstado, ...datosExtra } : c));
+    } catch (error) {
+      console.error('Error al actualizar estado en BD.', error);
+      alert('Error de conexión al guardar la cita en la base de datos.');
+    }
+  };
+
+  // NUEVO: Función para manejar la declinación con motivo
+  const handleDeclinarCita = async (idCita) => {
+    if (!razonDeclinacion.trim()) {
+      alert("Por favor, ingresa un motivo para declinar la cita.");
+      return;
+    }
+    
+    // Aprovechamos el método existente pero le pasamos el datosExtra con la razón
+    await cambiarEstadoCita(idCita, 'cancelada', { 
+      razonCancelacion: `Declinada por el médico: ${razonDeclinacion}` 
+    });
+    
+    setDeclineId(null);
+    setRazonDeclinacion('');
+  };
+
+  // --- 3. VER EXPEDIENTE CLÍNICO ---
+  const handleVerExpediente = async (pacienteId_Mongo) => {
+    if (!pacienteId_Mongo) {
+      alert("Error: Paciente no válido.");
+      return;
+    }
+    
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/citas/paciente/${pacienteId_Mongo}`);
+      const citasAtendidas = res.data.filter(c => c.estado === 'atendida' && c.diagnostico);
+      setHistorialPaciente(citasAtendidas);
+      setIsExpedienteModalOpen(true);
+    } catch (error) {
+      console.error("Error al cargar expediente:", error);
+      alert("Hubo un error al cargar el expediente clínico del paciente.");
+    }
+  };
+
+  // --- MÓDULO DE CONSULTA ---
   const handleAbrirConsulta = (cita) => {
-    // Extraemos los datos reales del paciente que viene de la BD
     const nombrePaciente = cita.pacienteId?.name || 'Paciente sin nombre';
     const edadPaciente = cita.pacienteId?.age || '--';
 
     setPacienteActivo({
       _id: cita._id,
+      pacienteId: cita.pacienteId?._id, 
       name: nombrePaciente,
       age: edadPaciente,
       reason: cita.motivo
@@ -174,27 +247,28 @@ const MedicoDashboard = () => {
   };
 
   const handleTerminarConsulta = () => {
-    alert(`Consulta finalizada y guardada para ${pacienteActivo?.name || 'el paciente'}.`);
-    cambiarEstadoCita(pacienteActivo._id, 'atendida'); 
+    cambiarEstadoCita(pacienteActivo._id, 'atendida', {
+      diagnostico: consultaData.diagnostico,
+      sintomas: consultaData.sintomas,
+      receta: consultaData.receta
+    }); 
     
     setIsConsultaModalOpen(false);
     setPacienteActivo(null);
     setConsultaData({ motivo: '', sintomas: '', diagnostico: '', receta: [] });
   };
 
-  // --- CÁLCULOS DINÁMICOS PARA LA INTERFAZ ---
+  // --- CÁLCULOS DINÁMICOS ---
   const pacientesHoy = citas.filter(c => c.estado !== 'cancelada').length;
   const atendidos = citas.filter(c => c.estado === 'atendida').length;
   const enSalaOconsulta = citas.filter(c => c.estado === 'en_sala' || c.estado === 'en_consulta').length;
   const finalizados = citas.filter(c => c.estado === 'atendida' || c.estado === 'cancelada').length;
 
-  // Busca al paciente que deba mostrarse en el cuadro principal "Héroe"
   const pacienteActual = citas.find(c => c.estado === 'en_consulta') 
     || citas.find(c => c.estado === 'en_sala') 
     || citas.find(c => c.estado === 'confirmada')
     || citas.find(c => c.estado === 'pendiente');
 
-  // Función para mantener la compatibilidad con tus clases CSS originales
   const getCssStatus = (estado) => {
     switch(estado) {
       case 'en_sala': return 'wait';
@@ -205,10 +279,23 @@ const MedicoDashboard = () => {
     }
   };
 
+  const getDisplayTime = (cita) => {
+    if (cita.estado === 'pendiente') return 'Nuevo';
+    const h = cita.horario || cita.hora;
+    return (h === 'Por definir') ? '--:--' : h;
+  };
+
   return (
-    <div className="medico-plaza-app">
+    <div className={`medico-plaza-app ${!agendaActiva ? 'agenda-pausada' : ''}`}>
+      
+      {/* CINTA DE ADVERTENCIA DE AGENDA PAUSADA */}
+      {!agendaActiva && (
+        <div style={{ backgroundColor: 'var(--warning)', color: '#000', textAlign: 'center', padding: '8px', fontWeight: 'bold', zIndex: 10 }}>
+          ⚠️ TU AGENDA ESTÁ PAUSADA. NO ESTÁS RECIBIENDO NUEVAS CITAS.
+        </div>
+      )}
+
       <div className="wrap">
-        
         <header className="top">
           <div className="brand">
             <span className="brand-mark">
@@ -241,7 +328,10 @@ const MedicoDashboard = () => {
                       <span className="menu-icon">⚙️</span> Configuración
                     </li>
                     <div className="dropdown-divider"></div>
-                    <li><span className="menu-icon">📅</span> Pausar mi agenda</li>
+                    <li onClick={handleToggleAgenda}>
+                      <span className="menu-icon">{agendaActiva ? '⏸️' : '▶️'}</span> 
+                      {agendaActiva ? 'Pausar mi agenda' : 'Reanudar mi agenda'}
+                    </li>
                     <li onClick={handleLogout} className="logout-item"><span className="menu-icon">🚪</span> Cerrar sesión</li>
                   </ul>
                 </div>
@@ -278,7 +368,7 @@ const MedicoDashboard = () => {
                   <p className="eyebrow">{pacienteActual.estado === 'en_consulta' ? 'En consulta ahora' : 'Próximo paciente'}</p>
                   <h2>{pacienteActual.pacienteId?.name || 'Paciente'}</h2>
                   <div className="hero-meta">
-                    <span className="chip">{pacienteActual.hora}</span>
+                    <span className="chip">{getDisplayTime(pacienteActual)}</span>
                     <span className="chip">{pacienteActual.pacienteId?.age || '--'} años</span>
                     <span className="chip">{pacienteActual.motivo}</span>
                   </div>
@@ -288,7 +378,7 @@ const MedicoDashboard = () => {
                     ) : (
                       <button className="btn btn-primary" onClick={() => handleAbrirConsulta(pacienteActual)}>Iniciar consulta</button>
                     )}
-                    <button className="btn">Ver expediente</button>
+                    <button className="btn" onClick={() => handleVerExpediente(pacienteActual.pacienteId?._id)}>Ver expediente</button>
                   </div>
                 </>
               )}
@@ -303,27 +393,72 @@ const MedicoDashboard = () => {
               <ol className="list">
                 {citas.map(cita => (
                   <li key={cita._id} className="row" data-status={getCssStatus(cita.estado)}>
-                    <span className="time">{cita.hora}</span>
-                    <div>
+                    <span className="time" style={{ fontSize: cita.estado === 'pendiente' ? '12px' : '16px' }}>
+                      {getDisplayTime(cita)}
+                    </span>
+                    <div style={{ width: '100%' }}>
                       <div className="row-top">
                         <strong>{cita.pacienteId?.name || 'Paciente'}</strong>
                         <span className="pill">
-                          {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && 'Por llegar'}
+                          {cita.estado === 'pendiente' && 'Pendiente'}
+                          {cita.estado === 'confirmada' && 'Por llegar'}
                           {cita.estado === 'en_sala' && 'En sala'}
                           {cita.estado === 'en_consulta' && 'En consulta'}
                           {cita.estado === 'atendida' && 'Atendido'}
-                          {cita.estado === 'cancelada' && 'No asistió'}
+                          {cita.estado === 'cancelada' && 'No asistió / Declinada'}
                         </span>
                       </div>
                       <p className="meta">{cita.motivo} · {cita.pacienteId?.age || '--'} años</p>
-                      <div className="row-foot">
-                        <span className="hint"></span>
+                      
+                      {/* NUEVO: Mostrar la razón si está cancelada/declinada */}
+                      {cita.estado === 'cancelada' && cita.razonCancelacion && (
+                        <div style={{ marginTop: '8px', padding: '6px 10px', backgroundColor: 'rgba(255, 91, 91, 0.05)', borderRadius: '6px', borderLeft: '3px solid var(--danger)' }}>
+                          <p style={{ margin: '0', fontSize: '13px', color: 'var(--danger)' }}><strong>Motivo:</strong> {cita.razonCancelacion}</p>
+                        </div>
+                      )}
+
+                      <div className="row-foot" style={{ marginTop: '12px' }}>
+                        <span className="hint">
+                          {cita.dia && cita.dia !== 'Por definir' && !cita.dia.includes('-') && cita.estado === 'pendiente' ? `Día preferido: ${cita.dia}` : ''}
+                        </span>
+                        
                         <div className="row-actions">
-                          {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && <button className="btn" onClick={() => cambiarEstadoCita(cita._id, 'en_sala')}>Llamar a sala</button>}
+                          {cita.estado === 'pendiente' && (
+                            <div style={{ width: '100%' }}>
+                              {declineId === cita._id ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', width: '100%' }}>
+                                  <span style={{ alignSelf: 'flex-start', fontSize: '13px', color: 'var(--danger)' }}>¿Motivo para declinar al paciente?</span>
+                                  
+                                  <input 
+                                    type="text" 
+                                    placeholder="Ej. Fuera de horario / Especialidad incorrecta..." 
+                                    value={razonDeclinacion}
+                                    onChange={(e) => setRazonDeclinacion(e.target.value)}
+                                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)' }}
+                                  />
+                                  
+                                  <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-ghost" onClick={() => { setDeclineId(null); setRazonDeclinacion(''); }}>Volver</button>
+                                    <button className="btn btn-danger" onClick={() => handleDeclinarCita(cita._id)}>Confirmar</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                  <button className="btn btn-primary" onClick={() => cambiarEstadoCita(cita._id, 'confirmada')}>Aceptar</button>
+                                  <button className="btn btn-ghost" onClick={() => setDeclineId(cita._id)} style={{ color: 'var(--danger)' }}>Declinar</button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {cita.estado === 'confirmada' && (
+                            <button className="btn" onClick={() => cambiarEstadoCita(cita._id, 'en_sala')}>Llamar a sala</button>
+                          )}
                           
                           {cita.estado === 'en_sala' && <button className="btn btn-primary" onClick={() => handleAbrirConsulta(cita)}>Iniciar consulta</button>}
                           {cita.estado === 'en_consulta' && <button className="btn btn-primary" onClick={() => handleAbrirConsulta(cita)}>Continuar</button>}
                         </div>
+
                       </div>
                     </div>
                   </li>
@@ -337,9 +472,9 @@ const MedicoDashboard = () => {
               <h2>Resultados por revisar</h2>
               <ul className="res" style={{ marginTop: '14px' }}>
                 {resultados.map(res => (
-                  <li key={res.id}>
-                    <div><strong>{res.name}</strong><small>{res.who}</small></div>
-                    <button className="btn" onClick={() => marcarResultadoRevisado(res.id)}>Marcar revisado</button>
+                  <li key={res._id}>
+                    <div><strong>{res.tipo}</strong><small>{res.pacienteId?.name || 'Paciente'}</small></div>
+                    <button className="btn" onClick={() => marcarResultadoRevisado(res._id)}>Marcar revisado</button>
                   </li>
                 ))}
               </ul>
@@ -412,7 +547,7 @@ const MedicoDashboard = () => {
         </div>
       )}
 
-      {/* --- MODAL DE CONFIGURACIÓN DEL MÉDICO --- */}
+      {/* --- MODAL DE CONFIGURACIÓN --- */}
       {isSettingsModalOpen && (
         <div className="medico-modal-overlay" onClick={() => setIsSettingsModalOpen(false)}>
           <div className="medico-modal-content" onClick={e => e.stopPropagation()}>
@@ -446,10 +581,47 @@ const MedicoDashboard = () => {
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* MODAL DE CONSULTA ACTIVA (MODO ENFOQUE)      */}
-      {/* ========================================== */}
-      
+      {/* --- MODAL PARA EXPEDIENTE CLÍNICO --- */}
+      {isExpedienteModalOpen && (
+        <div className="medico-modal-overlay" onClick={() => setIsExpedienteModalOpen(false)}>
+          <div className="medico-modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setIsExpedienteModalOpen(false)}>✕</button>
+            <h2>Expediente Médico Anterior</h2>
+            <p className="hint" style={{marginBottom: '20px'}}>Historial de consultas y diagnósticos pasados de este paciente.</p>
+
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {historialPaciente.length === 0 ? (
+                <p className="empty">El paciente no tiene consultas previas registradas.</p>
+              ) : (
+                historialPaciente.map((citaPrevia, i) => (
+                  <div key={i} style={{ border: '1px solid var(--line)', padding: '16px', borderRadius: '8px', marginBottom: '12px', backgroundColor: 'var(--surface-2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <strong>Fecha: {citaPrevia.dia}</strong>
+                      <span className="pill">ATENDIDO</span>
+                    </div>
+                    <p style={{ margin: '4px 0' }}><strong>Motivo:</strong> {citaPrevia.motivo}</p>
+                    <p style={{ margin: '4px 0' }}><strong>Síntomas:</strong> {citaPrevia.sintomas || 'No detallados'}</p>
+                    <p style={{ margin: '4px 0', color: 'var(--accent)' }}><strong>Diagnóstico:</strong> {citaPrevia.diagnostico}</p>
+                    
+                    {citaPrevia.receta && citaPrevia.receta.length > 0 && (
+                      <div style={{ marginTop: '12px', borderTop: '1px dashed var(--line)', paddingTop: '8px' }}>
+                        <strong>Receta indicada:</strong>
+                        <ul style={{ marginLeft: '20px', marginTop: '4px' }}>
+                          {citaPrevia.receta.map((med, j) => (
+                            <li key={j}>{med.nombre} - {med.dosis} ({med.frecuencia})</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE CONSULTA ACTIVA --- */}
       {isConsultaModalOpen && pacienteActivo && (
         <div className="consulta-modal-overlay">
           <div className="consulta-modal-content">

@@ -7,8 +7,6 @@ const connectDB = require('./src/config/db');
 const medicoRoutes = require('./src/routes/medicoRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 
-
-
 // Cargar variables de entorno
 dotenv.config();
 
@@ -36,8 +34,6 @@ const sanitizeMongo = (req, res, next) => {
   next();
 };
 
-
-
 // 2. Crear las reglas del limitador
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos de ventana de tiempo
@@ -46,21 +42,57 @@ const limiter = rateLimit({
 });
 
 // Middlewares
-app.use(helmet()); // 4. ActivarHelmet para ocultar cabeceras de vulnerabilidad
+app.use(helmet()); // 4. Activar Helmet para ocultar cabeceras de vulnerabilidad
 app.use(cors());
 app.use(express.json());
 app.use(limiter); // 3. Activar el limitador globalmente para todas las rutas
+
 // Activar el escudo
 app.use(sanitizeMongo);
-app.use('/api/medicos', medicoRoutes);
 
 // Rutas
+app.use('/api/medicos', medicoRoutes);
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/schedules', require('./src/routes/scheduleRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/appointments', require('./src/routes/appointmentRoutes'));
 app.use('/api/citas', require('./src/routes/citaRoutes'));
 app.use('/api/admin', adminRoutes);
+
+// ==========================================
+// RUTAS DIRECTAS DE RESULTADOS CLÍNICOS
+// ==========================================
+
+// 1. Obtener resultados del Paciente
+app.get('/api/resultados/paciente/:pacienteId', require('./src/controllers/resultadoController').getResultadosPaciente);
+
+// 2. Obtener resultados pendientes del Médico
+app.get('/api/resultados/medico/:medicoId', async (req, res) => {
+  try {
+    const Resultado = require('./src/models/Resultado'); // Llama al modelo
+    // Busca los resultados asignados a este médico y trae el nombre del paciente
+    const resultados = await Resultado.find({ medicoId: req.params.medicoId }).populate('pacienteId', 'name');
+    res.json(resultados);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al cargar resultados del médico' });
+  }
+});
+
+// 3. Actualizar estado de un resultado (Para "Marcar revisado")
+app.put('/api/resultados/:id/estado', async (req, res) => {
+  try {
+    const Resultado = require('./src/models/Resultado'); // Llama al modelo
+    const { estado } = req.body;
+    await Resultado.findByIdAndUpdate(req.params.id, { estado });
+    res.json({ mensaje: 'Resultado actualizado a ' + estado });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar el resultado' });
+  }
+});
+
+// ==========================================
 
 app.get('/', (req, res) => {
     res.send('API del Sistema de Citas Médicas funcionando');

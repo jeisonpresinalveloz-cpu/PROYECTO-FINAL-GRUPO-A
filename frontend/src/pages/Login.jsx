@@ -20,7 +20,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
       
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userId', res.data._id);
@@ -41,7 +41,7 @@ const Login = () => {
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.post('http://localhost:5000/api/auth/google', {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/google`, {
           access_token: tokenResponse.access_token
         });
 
@@ -70,7 +70,7 @@ const Login = () => {
     e.preventDefault();
     try {
       // Apuntamos a la nueva ruta que configuramos en authRoutes.js
-      const res = await axios.post('http://localhost:5000/api/auth/olvide-password', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/olvide-password`, {
         email: resetEmail
       });
       setResetMensaje({ texto: res.data.mensaje, tipo: 'success' });

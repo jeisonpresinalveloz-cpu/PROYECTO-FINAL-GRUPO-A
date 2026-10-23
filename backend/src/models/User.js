@@ -10,7 +10,10 @@ const userSchema = new mongoose.Schema({
   bloodType: { type: String, default: '' },
   allergies: { type: String, default: '' },
   exequatur: { type: String, default: '' }, // Número de licencia del médico
-
+  agendaActiva: {
+    type: Boolean,
+    default: true
+  },
   especialidad: { 
     type: String, 
     // Solo es obligatorio si el rol es 'medico'

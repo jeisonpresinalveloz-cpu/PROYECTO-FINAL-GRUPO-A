@@ -3,7 +3,7 @@ const User = require('../models/User');
 const { enviarCorreoConfirmacion } = require('../services/emailService');
 
 // HU05: Obtener las horas que YA están ocupadas para un médico en un día
-exports.getHorasOcupadas = async (req, res) => {
+const getHorasOcupadas = async (req, res) => {
   try {
     const { medicoId, dia } = req.query;
     // Busca citas confirmadas o pendientes para ese médico y día
@@ -22,7 +22,7 @@ exports.getHorasOcupadas = async (req, res) => {
 };
 
 // HU06: Crear una nueva reserva de cita y disparar correo (HU09)
-exports.crearCita = async (req, res) => {
+const crearCita = async (req, res) => {
   try {
     const { pacienteId, medicoId, dia, horario, motivo } = req.body;
 
@@ -53,13 +53,13 @@ exports.crearCita = async (req, res) => {
 };
 
 // HU: El médico visualiza su agenda de pacientes
-exports.getCitasMedico = async (req, res) => {
+const getCitasMedico = async (req, res) => {
   try {
     const { medicoId } = req.params;
     
     // Buscamos las citas de este médico y traemos el 'name' del paciente
     const citas = await Cita.find({ medicoId })
-                            .populate('pacienteId', 'name email')
+                            .populate('pacienteId', 'name email age') // Se agrega age para la vista del médico
                             .sort({ dia: 1, horario: 1 }); // Ordenamos por día y hora
                             
     res.status(200).json(citas);
@@ -69,7 +69,7 @@ exports.getCitasMedico = async (req, res) => {
 };
 
 // HU: Obtener la lista de citas de un paciente específico
-exports.getCitasPaciente = async (req, res) => {
+const getCitasPaciente = async (req, res) => {
   try {
     const { pacienteId } = req.params;
     // Buscamos las citas del paciente y traemos los datos del médico
@@ -82,32 +82,84 @@ exports.getCitasPaciente = async (req, res) => {
   }
 };
 
-// HU: Cancelar una cita (Cambiar estado a 'cancelada')
-exports.cancelarCita = async (req, res) => {
+// HU: Cancelar una cita (Cambiar estado a 'cancelada' y guardar la razón)
+const cancelarCita = async (req, res) => {
   try {
     const { id } = req.params;
-    // Buscamos la cita por su ID y actualizamos su estado
-    await Cita.findByIdAndUpdate(id, { estado: 'cancelada' });
-    res.status(200).json({ mensaje: 'Cita cancelada correctamente' });
+    // NUEVO: Extraemos la razón del cuerpo de la petición (req.body)
+    const { razonCancelacion } = req.body; 
+
+    // Buscamos la cita por su ID y actualizamos su estado Y su razón
+    const citaActualizada = await Cita.findByIdAndUpdate(
+      id, 
+      { 
+        estado: 'cancelada',
+        razonCancelacion: razonCancelacion // Guardamos la razón en MongoDB
+      },
+      { returnDocument: 'after' } // Para que devuelva el documento actualizado
+    );
+
+    if (!citaActualizada) {
+      return res.status(404).json({ mensaje: 'Cita no encontrada' });
+    }
+
+    res.status(200).json({ mensaje: 'Cita cancelada correctamente', cita: citaActualizada });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al cancelar la cita' });
   }
 };
 
-// HU: Médico aprueba o rechaza una cita pendiente
-exports.actualizarEstadoCita = async (req, res) => {
+// HU: Médico aprueba, atiende o declina una cita
+const actualizarEstadoCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body; // Recibirá 'confirmada' o 'cancelada'
+    // NUEVO: Extraemos la razonCancelacion del body
+    const { estado, diagnostico, sintomas, receta, razonCancelacion } = req.body; 
     
-    // Validamos que solo se envíen estados permitidos
-    if (!['confirmada', 'cancelada'].includes(estado)) {
+    const estadosPermitidos = ['pendiente', 'confirmada', 'en_sala', 'en_consulta', 'atendida', 'cancelada'];
+    if (estado && !estadosPermitidos.includes(estado)) {
       return res.status(400).json({ mensaje: 'Estado no válido' });
     }
 
-    const citaActualizada = await Cita.findByIdAndUpdate(id, { estado }, { new: true });
-    res.status(200).json({ mensaje: `Cita ${estado} correctamente`, cita: citaActualizada });
+    let datosActualizar = {};
+    if (estado) datosActualizar.estado = estado;
+    if (diagnostico) datosActualizar.diagnostico = diagnostico;
+    if (sintomas) datosActualizar.sintomas = sintomas;
+    if (receta) datosActualizar.receta = receta;
+    
+    // NUEVO: Si enviaron una razón de cancelación/declinación, la guardamos
+    if (razonCancelacion) datosActualizar.razonCancelacion = razonCancelacion;
+
+    const citaActualizada = await Cita.findByIdAndUpdate(id, datosActualizar, { returnDocument: 'after' });
+    res.status(200).json({ mensaje: 'Cita actualizada correctamente', cita: citaActualizada });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al actualizar el estado de la cita' });
   }
+};
+
+// NUEVA FUNCIÓN PARA EL PANEL DE ADMINISTRACIÓN
+const getTodasLasCitas = async (req, res) => {
+  try {
+    // Poblamos los datos del paciente y del médico para que el admin vea los nombres
+    const citas = await Cita.find()
+      .populate('pacienteId', 'name email')
+      .populate('medicoId', 'name especialidad')
+      .sort({ createdAt: -1 }); // Las más recientes primero
+
+    res.json(citas);
+  } catch (error) {
+    console.error("Error al obtener todas las citas:", error);
+    res.status(500).json({ mensaje: 'Error al cargar el historial de citas' });
+  }
+};
+
+// Exportamos todas las funciones al final usando un solo module.exports
+module.exports = {
+  getHorasOcupadas,
+  crearCita,
+  getCitasMedico,
+  getCitasPaciente,
+  cancelarCita,
+  actualizarEstadoCita,
+  getTodasLasCitas // Nueva función exportada
 };

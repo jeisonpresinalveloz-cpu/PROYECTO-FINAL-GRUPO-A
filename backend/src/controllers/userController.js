@@ -24,13 +24,24 @@ const getDoctors = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    // Añadimos 'especialidad' y 'exequatur' a la desestructuración
-    const { userId, name, phone, bloodType, allergies, especialidad, exequatur } = req.body;
+    const { userId, name, phone, bloodType, allergies, especialidad, exequatur, agendaActiva } = req.body;
 
+    // 1. Construimos un objeto SOLO con los campos que realmente se enviaron desde el frontend
+    // Esto evita que intentemos guardar valores "undefined" y borremos datos sin querer.
+    let datosActualizar = {};
+    if (name !== undefined) datosActualizar.name = name;
+    if (phone !== undefined) datosActualizar.phone = phone;
+    if (bloodType !== undefined) datosActualizar.bloodType = bloodType;
+    if (allergies !== undefined) datosActualizar.allergies = allergies;
+    if (especialidad !== undefined) datosActualizar.especialidad = especialidad;
+    if (exequatur !== undefined) datosActualizar.exequatur = exequatur;
+    if (agendaActiva !== undefined) datosActualizar.agendaActiva = agendaActiva; // El booleano se pasa directamente
+
+    // 2. Usamos $set para decirle a Mongo que SOLO actualice esos campos específicos
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, phone, bloodType, allergies, especialidad, exequatur }, // Y los añadimos aquí
-      { new: true, runValidators: true }
+      { $set: datosActualizar },
+      { returnDocument: 'after', runValidators: true }
     ).select('-password');
 
     if (!updatedUser) {
@@ -47,7 +58,6 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-// Agrega o modifica esta función en tu userController.js
 const getUsuarios = async (req, res) => {
   try {
     const roleFiltro = req.query.role; // Captura si en la URL dice ?role=medico
@@ -67,5 +77,17 @@ const getUsuarios = async (req, res) => {
 };
 
 
+const getUsuarioPorId = async (req, res) => {
+  try {
+    const usuario = await User.findById(req.params.id).select('-password');
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+    res.json(usuario);
+  } catch (error) {
+    console.error("Error al obtener el usuario por ID:", error);
+    res.status(500).json({ mensaje: 'Error en el servidor' });
+  }
+};
 
-module.exports = { getDoctors, updateUserProfile, getUsuarios };
+module.exports = { getDoctors, updateUserProfile, getUsuarios, getUsuarioPorId };
